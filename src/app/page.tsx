@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Search,
   FileText,
@@ -24,104 +24,14 @@ import {
   useFileUpload,
 } from "@/components/ui/file-upload";
 
-const mockCourses = [
-  {
-    id: 1,
-    code: "COMP SCI 1JC3",
-    name: "Computer Science Practice and Experience: Basic Concepts",
-    semester: "Fall 2024",
-    lastUpdated: "2 days ago",
-    department: "Computing and Software",
-  },
-  {
-    id: 2,
-    code: "COMP SCI 1MD3",
-    name: "Introduction to Programming",
-    semester: "Fall 2024",
-    lastUpdated: "1 week ago",
-    department: "Computing and Software",
-  },
-  {
-    id: 3,
-    code: "MATH 1A03",
-    name: "Integral Calculus with Applications",
-    semester: "Fall 2024",
-    lastUpdated: "3 days ago",
-    department: "Mathematics and Statistics",
-  },
-  {
-    id: 4,
-    code: "MATH 1AA3",
-    name: "Calculus for Science I",
-    semester: "Fall 2024",
-    lastUpdated: "5 days ago",
-    department: "Mathematics and Statistics",
-  },
-  {
-    id: 5,
-    code: "PHYSICS 1A03",
-    name: "Physics for the Life Sciences I",
-    semester: "Fall 2024",
-    lastUpdated: "2 weeks ago",
-    department: "Physics and Astronomy",
-  },
-  {
-    id: 6,
-    code: "CHEM 1A03",
-    name: "Introductory Chemistry",
-    semester: "Fall 2024",
-    lastUpdated: "4 days ago",
-    department: "Chemistry and Chemical Biology",
-  },
-  {
-    id: 7,
-    code: "BIOLOGY 1M03",
-    name: "Cellular and Molecular Biology",
-    semester: "Fall 2024",
-    lastUpdated: "1 week ago",
-    department: "Biology",
-  },
-  {
-    id: 8,
-    code: "ECON 1B03",
-    name: "Introductory Microeconomics",
-    semester: "Fall 2024",
-    lastUpdated: "1 week ago",
-    department: "Economics",
-  },
-  {
-    id: 9,
-    code: "PSYCH 1X03",
-    name: "Introduction to Psychology, Neuroscience & Behaviour",
-    semester: "Fall 2024",
-    lastUpdated: "1 week ago",
-    department: "Psychology, Neuroscience & Behaviour",
-  },
-  {
-    id: 10,
-    code: "ENG 1P03",
-    name: "University Writing",
-    semester: "Fall 2024",
-    lastUpdated: "5 days ago",
-    department: "English and Cultural Studies",
-  },
-  {
-    id: 11,
-    code: "COMP SCI 2C03",
-    name: "Data Structures and Algorithms",
-    semester: "Winter 2024",
-    lastUpdated: "2 weeks ago",
-    department: "Computing and Software",
-  },
-  {
-    id: 12,
-    code: "COMP SCI 2ME3",
-    name: "Introduction to Software Development",
-    semester: "Winter 2024",
-    lastUpdated: "3 weeks ago",
-    department: "Computing and Software",
-  },
-];
+type Course = {
+  id: number;
+  code: string;
+  name: string;
+  semester: string;
+  lastUpdated: string;
+  department: string;
+};
 
 const CustomFilePreview = ({ file }: { file: File }) => {
   // Check if the file is a PDF
@@ -172,10 +82,22 @@ const CustomFilePreview = ({ file }: { file: File }) => {
 
 export default function Component() {
   const [searchValue, setSearchValue] = useState("");
-  const [filteredCourses, setFilteredCourses] = useState(mockCourses);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [mockCourses, setMockCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    // Dynamically import the mock data JSON
+    import("@/data/mockCourses.json")
+      .then((module) => {
+        setMockCourses(module.default as Course[]);
+        setFilteredCourses(module.default as Course[]);
+      })
+      .catch((err) => {
+        console.error("Failed to load mock courses", err);
+      });
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -192,14 +114,6 @@ export default function Component() {
     } else {
       setFilteredCourses(mockCourses);
     }
-  };
-
-  const handleSearchFocus = () => {
-    setIsSearchFocused(true);
-  };
-
-  const handleSearchBlur = () => {
-    setIsSearchFocused(false);
   };
 
   const handleFileUpload = useCallback(
@@ -335,8 +249,6 @@ export default function Component() {
                     placeholder="Search for courses..."
                     value={searchValue}
                     onChange={handleSearchChange}
-                    onFocus={handleSearchFocus}
-                    onBlur={handleSearchBlur}
                     className={`pl-12 pr-4 py-6 text-lg border-2 rounded-xl transition-all duration-300 border-mcmaster-maroon focus-visible:ring-mcmaster-yellow/50 focus-visible:ring-[3px] focus-visible:border-mcmaster-yellow focus-visible:outline-none ${
                       searchValue.length > 0
                         ? "shadow-2xl border-opacity-100"
