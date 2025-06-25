@@ -243,7 +243,9 @@ export default function Component() {
 
 	return (
 		<div className="relative h-screen">
-			<Header />
+			<div className="absolute top-0 left-0 z-10 w-full">
+				<Header />
+			</div>
 			
 			<FileUpload
 				value={uploadedFiles}
@@ -395,7 +397,9 @@ export default function Component() {
 				</FileUploadDropzone>
 			</FileUpload>
 
-			<Footer />
+			<div className="absolute bottom-0 left-0 w-full">
+				<Footer />
+			</div>
 		</div>
 	);
 }

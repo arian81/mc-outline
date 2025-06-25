@@ -1,11 +1,7 @@
 import "@/styles/globals.css";
-
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-
 import { TRPCReactProvider } from "@/trpc/react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
