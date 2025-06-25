@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { FileText, GraduationCap, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
 type Course = {
 	id: number;
@@ -81,6 +81,31 @@ export default function Component() {
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 	const [isDragOver, setIsDragOver] = useState(false);
 	const [mockCourses, setMockCourses] = useState<Course[]>([]);
+	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+	const searchContainerRef = useRef<HTMLDivElement>(null);
+
+	const handleCourseSelection = (course: Course) => {
+		console.log("Selected course:", course);
+		// Clear search and return to original state
+		setSearchValue("");
+		setHighlightedIndex(-1);
+		// You can add your selection logic here
+	};
+
+	// Handle clicks outside the search area
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+				setSearchValue("");
+				setHighlightedIndex(-1);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, []);
 
 	useEffect(() => {
 		// Dynamically import the mock data JSON
@@ -106,8 +131,47 @@ export default function Component() {
 					course.department.toLowerCase().includes(value.toLowerCase()),
 			);
 			setFilteredCourses(filtered);
+			// Only highlight the first result if we don't already have a valid highlighted index
+			// or if the filtered results changed
+			if (highlightedIndex < 0 || highlightedIndex >= filtered.length) {
+				setHighlightedIndex(filtered.length > 0 ? 0 : -1);
+			}
 		} else {
 			setFilteredCourses(mockCourses);
+			setHighlightedIndex(-1);
+		}
+	};
+
+	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (!searchValue || filteredCourses.length === 0) return;
+
+		switch (e.key) {
+			case "ArrowDown":
+				e.preventDefault();
+				setHighlightedIndex((prev) =>
+					prev < filteredCourses.length - 1 ? prev + 1 : 0
+				);
+				break;
+			case "ArrowUp":
+				e.preventDefault();
+				setHighlightedIndex((prev) =>
+					prev > 0 ? prev - 1 : filteredCourses.length - 1
+				);
+				break;
+			case "Enter":
+				if (highlightedIndex >= 0 && highlightedIndex < filteredCourses.length) {
+					const selected = filteredCourses[highlightedIndex];
+					if (selected) {
+						handleCourseSelection(selected);
+					}
+				}
+				break;
+			case "Escape":
+				setSearchValue("");
+				setHighlightedIndex(-1);
+				break;
+			default:
+				break;
 		}
 	};
 
@@ -226,6 +290,7 @@ export default function Component() {
 								</div>
 
 								<div
+									ref={searchContainerRef}
 									className={`relative z-50 mx-auto mb-4 max-w-xl ${searchValue.length > 0 ? "-translate-y-32 transform" : "translate-y-0 transform"}`}
 								>
 									<Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 transform" />
@@ -234,6 +299,7 @@ export default function Component() {
 										placeholder="Search for courses..."
 										value={searchValue}
 										onChange={handleSearchChange}
+										onKeyDown={handleSearchKeyDown}
 										className={`rounded-xl border-2 border-mcmaster-maroon py-6 pr-4 pl-12 text-lg focus-visible:border-mcmaster-yellow focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-mcmaster-yellow/50 ${searchValue.length > 0 ? "border-opacity-100 shadow-2xl" : "border-opacity-50 shadow-lg"}`}
 									/>
 
@@ -247,10 +313,14 @@ export default function Component() {
 															{filteredCourses.length !== 1 ? "s" : ""} for you
 														</p>
 													</div>
-													{filteredCourses.map((course) => (
+													{filteredCourses.map((course, idx) => (
 														<div
 															key={course.id}
-															className="flex cursor-pointer items-start gap-3 border-gray-100 border-b p-4 last:border-b-0 hover:bg-gray-50"
+															className={`flex cursor-pointer items-start gap-3 border-gray-100 border-b p-4 last:border-b-0 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : ""}`}
+															onMouseEnter={() => setHighlightedIndex(idx)}
+															onClick={() => {
+																handleCourseSelection(course);
+															}}
 														>
 															<FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
 															<div className="min-w-0 flex-1">

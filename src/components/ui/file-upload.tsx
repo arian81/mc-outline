@@ -758,14 +758,6 @@ function FileUploadDropzone(props: FileUploadDropzoneProps) {
 	const onKeyDown = React.useCallback(
 		(event: React.KeyboardEvent<HTMLDivElement>) => {
 			onKeyDownProp?.(event);
-
-			if (
-				!event.defaultPrevented &&
-				(event.key === "Enter" || event.key === " ")
-			) {
-				event.preventDefault();
-				context.inputRef.current?.click();
-			}
 		},
 		[context.inputRef, onKeyDownProp],
 	);
