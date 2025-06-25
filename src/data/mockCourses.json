@@ -1,7 +1,8 @@
 [
 	{
 		"id": 1,
-		"code": "COMP SCI 1JC3",
+		"major": "COMPSCI",
+		"course_code": "1JC3",
 		"name": "Computer Science Practice and Experience: Basic Concepts",
 		"semester": "Fall 2024",
 		"lastUpdated": "2 days ago",
@@ -9,7 +10,8 @@
 	},
 	{
 		"id": 2,
-		"code": "COMP SCI 1MD3",
+		"major": "COMPSCI",
+		"course_code": "1MD3",
 		"name": "Introduction to Programming",
 		"semester": "Fall 2024",
 		"lastUpdated": "1 week ago",
@@ -17,7 +19,8 @@
 	},
 	{
 		"id": 3,
-		"code": "MATH 1A03",
+		"major": "MATH",
+		"course_code": "1A03",
 		"name": "Integral Calculus with Applications",
 		"semester": "Fall 2024",
 		"lastUpdated": "3 days ago",
@@ -25,7 +28,8 @@
 	},
 	{
 		"id": 4,
-		"code": "MATH 1AA3",
+		"major": "MATH",
+		"course_code": "1AA3",
 		"name": "Calculus for Science I",
 		"semester": "Fall 2024",
 		"lastUpdated": "5 days ago",
@@ -33,7 +37,8 @@
 	},
 	{
 		"id": 5,
-		"code": "PHYSICS 1A03",
+		"major": "PHYSICS",
+		"course_code": "1A03",
 		"name": "Physics for the Life Sciences I",
 		"semester": "Fall 2024",
 		"lastUpdated": "2 weeks ago",
@@ -41,7 +46,8 @@
 	},
 	{
 		"id": 6,
-		"code": "CHEM 1A03",
+		"major": "CHEM",
+		"course_code": "1A03",
 		"name": "Introductory Chemistry",
 		"semester": "Fall 2024",
 		"lastUpdated": "4 days ago",
@@ -49,7 +55,8 @@
 	},
 	{
 		"id": 7,
-		"code": "BIOLOGY 1M03",
+		"major": "BIOLOGY",
+		"course_code": "1M03",
 		"name": "Cellular and Molecular Biology",
 		"semester": "Fall 2024",
 		"lastUpdated": "1 week ago",
@@ -57,7 +64,8 @@
 	},
 	{
 		"id": 8,
-		"code": "ECON 1B03",
+		"major": "ECON",
+		"course_code": "1B03",
 		"name": "Introductory Microeconomics",
 		"semester": "Fall 2024",
 		"lastUpdated": "1 week ago",
@@ -65,7 +73,8 @@
 	},
 	{
 		"id": 9,
-		"code": "PSYCH 1X03",
+		"major": "PSYCH",
+		"course_code": "1X03",
 		"name": "Introduction to Psychology, Neuroscience & Behaviour",
 		"semester": "Fall 2024",
 		"lastUpdated": "1 week ago",
@@ -73,7 +82,8 @@
 	},
 	{
 		"id": 10,
-		"code": "ENG 1P03",
+		"major": "ENG",
+		"course_code": "1P03",
 		"name": "University Writing",
 		"semester": "Fall 2024",
 		"lastUpdated": "5 days ago",
@@ -81,7 +91,8 @@
 	},
 	{
 		"id": 11,
-		"code": "COMP SCI 2C03",
+		"major": "COMPSCI",
+		"course_code": "2C03",
 		"name": "Data Structures and Algorithms",
 		"semester": "Winter 2024",
 		"lastUpdated": "2 weeks ago",
@@ -89,7 +100,8 @@
 	},
 	{
 		"id": 12,
-		"code": "COMP SCI 2ME3",
+		"major": "COMPSCI",
+		"course_code": "2ME3",
 		"name": "Introduction to Software Development",
 		"semester": "Winter 2024",
 		"lastUpdated": "3 weeks ago",

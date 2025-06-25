@@ -16,12 +16,16 @@ import {
 } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { FileText, GraduationCap, Search } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 import { useCallback, useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 type Course = {
 	id: number;
-	code: string;
+	major: string;
+	course_code: string;
 	name: string;
 	semester: string;
 	lastUpdated: string;
@@ -83,13 +87,15 @@ export default function Component() {
 	const [mockCourses, setMockCourses] = useState<Course[]>([]);
 	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 	const searchContainerRef = useRef<HTMLDivElement>(null);
+	const router = useRouter();
 
 	const handleCourseSelection = (course: Course) => {
 		console.log("Selected course:", course);
 		// Clear search and return to original state
 		setSearchValue("");
 		setHighlightedIndex(-1);
-		// You can add your selection logic here
+		// Navigate to the course page
+		router.push(`/${course.major}/${course.course_code}`);
 	};
 
 	// Handle clicks outside the search area
@@ -126,7 +132,8 @@ export default function Component() {
 		if (value.length > 0) {
 			const filtered = mockCourses.filter(
 				(course) =>
-					course.code.toLowerCase().includes(value.toLowerCase()) ||
+					course.major.toLowerCase().includes(value.toLowerCase()) ||
+					course.course_code.toLowerCase().includes(value.toLowerCase()) ||
 					course.name.toLowerCase().includes(value.toLowerCase()) ||
 					course.department.toLowerCase().includes(value.toLowerCase()),
 			);
@@ -236,22 +243,8 @@ export default function Component() {
 
 	return (
 		<div className="relative h-screen">
-			<header className="absolute top-0 left-0 z-10 w-full px-6 py-4">
-				<div className="flex items-center justify-start">
-					<div className="flex items-center gap-3">
-						<div className="rounded-lg bg-mcmaster-maroon p-2">
-							<GraduationCap className="h-6 w-6 text-white" />
-						</div>
-						<h1 className="font-bold text-mcmaster-maroon text-xl">
-							McMaster Course Outlines
-						</h1>
-						<p className="text-mcmaster-gray text-sm">
-							Find and share course outlines
-						</p>
-					</div>
-				</div>
-			</header>
-
+			<Header />
+			
 			<FileUpload
 				value={uploadedFiles}
 				onValueChange={setUploadedFiles}
@@ -325,7 +318,7 @@ export default function Component() {
 															<FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
 															<div className="min-w-0 flex-1">
 																<h3 className="mb-1 font-medium text-mcmaster-maroon">
-																	{course.code}
+																	{course.major} {course.course_code}
 																</h3>
 																<p className="mb-1 line-clamp-2 text-gray-600 text-sm">
 																	{course.name}
@@ -402,13 +395,7 @@ export default function Component() {
 				</FileUploadDropzone>
 			</FileUpload>
 
-			<footer className="absolute bottom-0 left-0 w-full px-4 py-4">
-				<div className="mx-auto max-w-4xl text-center">
-					<p className="text-mcmaster-gray text-sm">
-						Obviously not affiliated with Mac
-					</p>
-				</div>
-			</footer>
+			<Footer />
 		</div>
 	);
 }
