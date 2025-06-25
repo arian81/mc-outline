@@ -9,7 +9,7 @@ export function Header() {
 						<GraduationCap className="h-6 w-6 text-white" />
 					</div>
 					<h1 className="font-bold text-mcmaster-maroon text-xl">
-						McMaster Course Outlines
+						McOutlines
 					</h1>
 					<p className="text-mcmaster-gray text-sm">
 						Find and share course outlines
