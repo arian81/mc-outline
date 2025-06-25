@@ -199,11 +199,7 @@ export default function Component() {
 				className="w-full"
 			>
 				<FileUploadDropzone
-					className={`h-screen transition-all duration-300 ${
-						isDragOver
-							? "border-4 border-mcmaster-maroon border-dashed bg-mcmaster-yellow/10"
-							: ""
-					}`}
+					className={`h-screen ${isDragOver ? "border-4 border-mcmaster-maroon border-dashed bg-mcmaster-yellow/10" : ""}`}
 					onDragEnter={() => setIsDragOver(true)}
 					onDragLeave={() => setIsDragOver(false)}
 					onDrop={() => setIsDragOver(false)}
@@ -216,16 +212,10 @@ export default function Component() {
 					<div className="flex h-full items-center justify-center overflow-clip p-4 pt-20">
 						<div className="w-full max-w-2xl">
 							<div
-								className={`transition-all duration-700 ease-in-out ${
-									searchValue.length > 0 ? "mb-6" : ""
-								}`}
+								className={`${searchValue.length > 0 ? "mb-6" : ""}`}
 							>
 								<div
-									className={`mb-8 text-center transition-all duration-500 ${
-										searchValue.length > 0
-											? "-translate-y-8 pointer-events-none transform opacity-0"
-											: "translate-y-0 transform opacity-100"
-									}`}
+									className={`mb-8 text-center ${searchValue.length > 0 ? "-translate-y-8 pointer-events-none transform opacity-0" : "translate-y-0 transform opacity-100"}`}
 								>
 									<h2 className="mb-6 font-bold text-5xl text-mcmaster-maroon">
 										Find Course Outlines
@@ -236,11 +226,7 @@ export default function Component() {
 								</div>
 
 								<div
-									className={`relative z-50 mx-auto mb-4 max-w-xl transition-all duration-700 ease-in-out ${
-										searchValue.length > 0
-											? "-translate-y-32 transform"
-											: "translate-y-0 transform"
-									}`}
+									className={`relative z-50 mx-auto mb-4 max-w-xl ${searchValue.length > 0 ? "-translate-y-32 transform" : "translate-y-0 transform"}`}
 								>
 									<Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 transform" />
 									<Input
@@ -248,11 +234,7 @@ export default function Component() {
 										placeholder="Search for courses..."
 										value={searchValue}
 										onChange={handleSearchChange}
-										className={`rounded-xl border-2 border-mcmaster-maroon py-6 pr-4 pl-12 text-lg transition-all duration-300 focus-visible:border-mcmaster-yellow focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-mcmaster-yellow/50 ${
-											searchValue.length > 0
-												? "border-opacity-100 shadow-2xl"
-												: "border-opacity-50 shadow-lg"
-										}`}
+										className={`rounded-xl border-2 border-mcmaster-maroon py-6 pr-4 pl-12 text-lg focus-visible:border-mcmaster-yellow focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-mcmaster-yellow/50 ${searchValue.length > 0 ? "border-opacity-100 shadow-2xl" : "border-opacity-50 shadow-lg"}`}
 									/>
 
 									{searchValue && (
@@ -268,7 +250,7 @@ export default function Component() {
 													{filteredCourses.map((course) => (
 														<div
 															key={course.id}
-															className="flex cursor-pointer items-start gap-3 border-gray-100 border-b p-4 transition-colors last:border-b-0 hover:bg-gray-50"
+															className="flex cursor-pointer items-start gap-3 border-gray-100 border-b p-4 last:border-b-0 hover:bg-gray-50"
 														>
 															<FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
 															<div className="min-w-0 flex-1">
@@ -316,15 +298,11 @@ export default function Component() {
 							)}
 
 							<div
-								className={`transition-all duration-700 ease-in-out ${
-									searchValue.length > 0
-										? "pointer-events-none translate-y-8 transform opacity-0"
-										: "translate-y-0 transform opacity-100"
-								}`}
+								className={`${searchValue.length > 0 ? "pointer-events-none translate-y-8 transform opacity-0" : "translate-y-0 transform opacity-100"}`}
 							>
 								<div className="text-center">
 									<FileUploadTrigger asChild>
-										<Button className="rounded-lg cursor-pointer bg-mcmaster-maroon px-8 py-3 font-medium text-white transition-all duration-200 hover:shadow-lg">
+										<Button className="rounded-lg cursor-pointer bg-mcmaster-maroon px-8 py-3 font-medium text-white hover:shadow-lg">
 											Give us your outline files!
 										</Button>
 									</FileUploadTrigger>
