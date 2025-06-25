@@ -305,13 +305,15 @@ export default function Component() {
 								</div>
 							</div>
 
-							<div className="my-10 flex items-center gap-4">
-								<Separator className="flex-1" />
-								<span className="px-4 font-medium text-mcmaster-gray text-sm">
-									or
-								</span>
-								<Separator className="flex-1" />
-							</div>
+							{searchValue.length === 0 && (
+								<div className="my-10 flex items-center gap-4">
+									<Separator className="flex-1" />
+									<span className="px-4 font-medium text-mcmaster-gray text-sm">
+										or
+									</span>
+									<Separator className="flex-1" />
+								</div>
+							)}
 
 							<div
 								className={`transition-all duration-700 ease-in-out ${
