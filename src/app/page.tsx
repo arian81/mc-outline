@@ -322,7 +322,7 @@ export default function Component() {
 							>
 								<div className="text-center">
 									<FileUploadTrigger asChild>
-										<Button className="rounded-lg bg-mcmaster-maroon px-8 py-3 font-medium text-white transition-all duration-200 hover:shadow-lg">
+										<Button className="rounded-lg cursor-pointer bg-mcmaster-maroon px-8 py-3 font-medium text-white transition-all duration-200 hover:shadow-lg">
 											Give us your outline files!
 										</Button>
 									</FileUploadTrigger>
