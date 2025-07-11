@@ -288,7 +288,6 @@ interface FileUploadRootProps
 	) => Promise<void> | void;
 	accept?: string;
 	maxFiles?: number;
-	maxSize?: number;
 	dir?: Direction;
 	label?: string;
 	name?: string;
@@ -311,7 +310,6 @@ function FileUploadRoot(props: FileUploadRootProps) {
 		onUpload,
 		accept,
 		maxFiles,
-		maxSize,
 		dir: dirProp,
 		label,
 		name,
@@ -484,12 +482,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
 					}
 				}
 
-				if (maxSize && file.size > maxSize) {
-					rejectionMessage = "File too large";
-					onFileReject?.(file, rejectionMessage);
-					rejected = true;
-					invalid = true;
-				}
+
 
 				if (!rejected) {
 					acceptedFiles.push(file);
@@ -542,7 +535,6 @@ function FileUploadRoot(props: FileUploadRootProps) {
 			onFileValidate,
 			onFileReject,
 			acceptTypes,
-			maxSize,
 			disabled,
 		],
 	);

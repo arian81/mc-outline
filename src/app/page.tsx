@@ -10,16 +10,11 @@ import { Button } from "@/components/ui/button";
 import {
 	FileUpload,
 	FileUploadDropzone,
-	FileUploadItem,
-	FileUploadItemDelete,
-	FileUploadItemMetadata,
-	FileUploadItemPreview,
-	FileUploadItemProgress,
-	FileUploadList,
 	FileUploadTrigger,
 } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useFileStorage } from "@/lib/opfs";
 
 type Course = {
 	id: number;
@@ -29,57 +24,6 @@ type Course = {
 	semester: string;
 	lastUpdated: string;
 	department: string;
-};
-
-const CustomFilePreview = ({ file }: { file: File }) => {
-	// Check if the file is a PDF
-	if (
-		file.type === "application/pdf" ||
-		file.name.toLowerCase().endsWith(".pdf")
-	) {
-		return (
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="16"
-				height="16"
-				viewBox="0 0 16 16"
-				className="text-mcmaster-maroon"
-				role="img"
-				aria-label="PDF file icon"
-			>
-				<path
-					fill="none"
-					stroke="currentColor"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M2.8 14.34c1.81-1.25 3.02-3.16 3.91-5.5c.9-2.33 1.86-4.33 1.44-6.63c-.06-.36-.57-.73-.83-.7c-1.02.06-.95 1.21-.85 1.9c.24 1.71 1.56 3.7 2.84 5.56c1.27 1.87 2.32 2.16 3.78 2.26c.5.03 1.25-.14 1.37-.58c.77-2.8-9.02-.54-12.28 2.08c-.4.33-.86 1-.6 1.46c.20.36.87.4 1.23.15h0Z"
-					strokeWidth="1"
-				/>
-			</svg>
-		);
-	}
-
-	// Default icon for other file types
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			className="text-mcmaster-maroon"
-			role="img"
-			aria-label="File icon"
-		>
-			<path
-				fill="none"
-				stroke="currentColor"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				d="M13.5 6.5v6a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h4.01m-.01 0l5 5h-4a1 1 0 0 1-1-1z"
-				stroke-width="1"
-			/>
-		</svg>
-	);
 };
 
 export default function Component() {
@@ -92,18 +36,7 @@ export default function Component() {
 	const searchContainerRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
-	// Generate deterministic ID for file keys
-	const generateFileId = (file: File, index: number) => {
-		// Create a deterministic hash-like string from file properties
-		const fileString = `${file.name}-${file.size}-${file.lastModified}-${index}`;
-		let hash = 0;
-		for (let i = 0; i < fileString.length; i++) {
-			const char = fileString.charCodeAt(i);
-			hash = (hash << 5) - hash + char;
-			hash = hash & hash; // Convert to 32-bit integer
-		}
-		return `file-${Math.abs(hash).toString(36)}`;
-	};
+	const { uploadFile } = useFileStorage();
 
 	const handleCourseSelection = (course: Course) => {
 		console.log("Selected course:", course);
@@ -218,45 +151,45 @@ export default function Component() {
 			},
 		) => {
 			try {
-				// Process each file individually
-				const uploadPromises = files.map(async (file) => {
+				const successfulUploads: File[] = [];
+				
+				// Process each file
+				for (const file of files) {
 					try {
-						// Simulate file upload with progress
-						const totalChunks = 10;
-						let uploadedChunks = 0;
-
-						// Simulate chunk upload with delays
-						for (let i = 0; i < totalChunks; i++) {
-							// Simulate network delay (100-300ms per chunk)
-							await new Promise((resolve) =>
-								setTimeout(resolve, Math.random() * 200 + 100),
-							);
-
-							// Update progress for this specific file
-							uploadedChunks++;
-							const progress = (uploadedChunks / totalChunks) * 100;
-							onProgress(file, progress);
+						// Validate file type
+						if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+							onError(file, new Error("Only PDF files are allowed"));
+							continue;
 						}
 
-						// Simulate server processing delay
-						await new Promise((resolve) => setTimeout(resolve, 500));
+						// Use the hook's uploadFile method
+						await uploadFile(file, {
+							name: file.name,
+							originalName: file.name,
+							size: file.size,
+							type: file.type,
+							lastModified: file.lastModified,
+						});
+
+						successfulUploads.push(file);
 						onSuccess(file);
 					} catch (error) {
 						onError(
 							file,
-							error instanceof Error ? error : new Error("Upload failed"),
+							error instanceof Error ? error : new Error("Failed to process file"),
 						);
 					}
-				});
+				}
 
-				// Wait for all uploads to complete
-				await Promise.all(uploadPromises);
+				// If any files were successfully processed, navigate to review page immediately
+				if (successfulUploads.length > 0) {
+					router.push("/review");
+				}
 			} catch (error) {
-				// This handles any error that might occur outside the individual upload processes
-				console.error("Unexpected error during upload:", error);
+				console.error("Unexpected error during file processing:", error);
 			}
 		},
-		[],
+		[router, uploadFile],
 	);
 
 	const handleFileReject = useCallback((file: File, message: string) => {
@@ -273,7 +206,6 @@ export default function Component() {
 				value={uploadedFiles}
 				onValueChange={setUploadedFiles}
 				accept=".pdf"
-				maxSize={10 * 1024 * 1024} // 10MB
 				multiple
 				onUpload={handleFileUpload}
 				onFileReject={handleFileReject}
@@ -404,23 +336,7 @@ export default function Component() {
 									</div>
 								</div>
 
-								<FileUploadList orientation="horizontal" className="mt-4">
-									{uploadedFiles.map((file, index) => (
-										<FileUploadItem
-											key={generateFileId(file, index)}
-											value={file}
-										>
-											<FileUploadItemPreview
-												render={(file) => {
-													return <CustomFilePreview file={file} />;
-												}}
-											/>
-											<FileUploadItemMetadata />
-											<FileUploadItemProgress />
-											<FileUploadItemDelete />
-										</FileUploadItem>
-									))}
-								</FileUploadList>
+
 							</div>
 						</div>
 					</div>
