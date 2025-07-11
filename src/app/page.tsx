@@ -1,7 +1,11 @@
 "use client";
 
+import { FileText, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type React from "react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import {
 	FileUpload,
@@ -16,11 +20,6 @@ import {
 } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Search } from "lucide-react";
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 
 type Course = {
 	id: number;
@@ -45,6 +44,8 @@ const CustomFilePreview = ({ file }: { file: File }) => {
 				height="16"
 				viewBox="0 0 16 16"
 				className="text-mcmaster-maroon"
+				role="img"
+				aria-label="PDF file icon"
 			>
 				<path
 					fill="none"
@@ -66,6 +67,8 @@ const CustomFilePreview = ({ file }: { file: File }) => {
 			height="16"
 			viewBox="0 0 16 16"
 			className="text-mcmaster-maroon"
+			role="img"
+			aria-label="File icon"
 		>
 			<path
 				fill="none"
@@ -89,6 +92,19 @@ export default function Component() {
 	const searchContainerRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
+	// Generate deterministic ID for file keys
+	const generateFileId = (file: File, index: number) => {
+		// Create a deterministic hash-like string from file properties
+		const fileString = `${file.name}-${file.size}-${file.lastModified}-${index}`;
+		let hash = 0;
+		for (let i = 0; i < fileString.length; i++) {
+			const char = fileString.charCodeAt(i);
+			hash = (hash << 5) - hash + char;
+			hash = hash & hash; // Convert to 32-bit integer
+		}
+		return `file-${Math.abs(hash).toString(36)}`;
+	};
+
 	const handleCourseSelection = (course: Course) => {
 		console.log("Selected course:", course);
 		// Clear search and return to original state
@@ -101,15 +117,18 @@ export default function Component() {
 	// Handle clicks outside the search area
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+			if (
+				searchContainerRef.current &&
+				!searchContainerRef.current.contains(event.target as Node)
+			) {
 				setSearchValue("");
 				setHighlightedIndex(-1);
 			}
 		};
 
-		document.addEventListener('mousedown', handleClickOutside);
+		document.addEventListener("mousedown", handleClickOutside);
 		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
+			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, []);
 
@@ -156,17 +175,20 @@ export default function Component() {
 			case "ArrowDown":
 				e.preventDefault();
 				setHighlightedIndex((prev) =>
-					prev < filteredCourses.length - 1 ? prev + 1 : 0
+					prev < filteredCourses.length - 1 ? prev + 1 : 0,
 				);
 				break;
 			case "ArrowUp":
 				e.preventDefault();
 				setHighlightedIndex((prev) =>
-					prev > 0 ? prev - 1 : filteredCourses.length - 1
+					prev > 0 ? prev - 1 : filteredCourses.length - 1,
 				);
 				break;
 			case "Enter":
-				if (highlightedIndex >= 0 && highlightedIndex < filteredCourses.length) {
+				if (
+					highlightedIndex >= 0 &&
+					highlightedIndex < filteredCourses.length
+				) {
 					const selected = filteredCourses[highlightedIndex];
 					if (selected) {
 						handleCourseSelection(selected);
@@ -246,7 +268,7 @@ export default function Component() {
 			<div className="absolute top-0 left-0 z-10 w-full">
 				<Header />
 			</div>
-			
+
 			<FileUpload
 				value={uploadedFiles}
 				onValueChange={setUploadedFiles}
@@ -270,9 +292,7 @@ export default function Component() {
 				>
 					<div className="flex h-full items-center justify-center overflow-clip p-4 pt-20">
 						<div className="w-full max-w-2xl">
-							<div
-								className={`${searchValue.length > 0 ? "mb-6" : ""}`}
-							>
+							<div className={`${searchValue.length > 0 ? "mb-6" : ""}`}>
 								<div
 									className={`mb-8 text-center ${searchValue.length > 0 ? "-translate-y-8 pointer-events-none transform opacity-0" : "translate-y-0 transform opacity-100"}`}
 								>
@@ -309,12 +329,19 @@ export default function Component() {
 														</p>
 													</div>
 													{filteredCourses.map((course, idx) => (
-														<div
+														<button
+															type="button"
 															key={course.id}
-															className={`flex cursor-pointer items-start gap-3 border-gray-100 border-b p-4 last:border-b-0 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : ""}`}
+															className={`flex w-full cursor-pointer items-start gap-3 border-gray-100 border-b p-4 last:border-b-0 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : ""}`}
 															onMouseEnter={() => setHighlightedIndex(idx)}
 															onClick={() => {
 																handleCourseSelection(course);
+															}}
+															onKeyDown={(e) => {
+																if (e.key === "Enter" || e.key === " ") {
+																	e.preventDefault();
+																	handleCourseSelection(course);
+																}
 															}}
 														>
 															<FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
@@ -333,7 +360,7 @@ export default function Component() {
 																	<span>{course.department}</span>
 																</div>
 															</div>
-														</div>
+														</button>
 													))}
 												</>
 											) : (
@@ -367,7 +394,7 @@ export default function Component() {
 							>
 								<div className="text-center">
 									<FileUploadTrigger asChild>
-										<Button className="rounded-lg cursor-pointer bg-mcmaster-maroon px-8 py-3 font-medium text-white hover:shadow-lg">
+										<Button className="cursor-pointer rounded-lg bg-mcmaster-maroon px-8 py-3 font-medium text-white hover:shadow-lg">
 											Give us your outline files!
 										</Button>
 									</FileUploadTrigger>
@@ -379,7 +406,10 @@ export default function Component() {
 
 								<FileUploadList orientation="horizontal" className="mt-4">
 									{uploadedFiles.map((file, index) => (
-										<FileUploadItem key={index} value={file}>
+										<FileUploadItem
+											key={generateFileId(file, index)}
+											value={file}
+										>
 											<FileUploadItemPreview
 												render={(file) => {
 													return <CustomFilePreview file={file} />;

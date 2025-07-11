@@ -8,9 +8,7 @@ export function Header() {
 					<div className="rounded-lg bg-mcmaster-maroon p-2">
 						<GraduationCap className="h-6 w-6 text-white" />
 					</div>
-					<h1 className="font-bold text-mcmaster-maroon text-xl">
-						McOutlines
-					</h1>
+					<h1 className="font-bold text-mcmaster-maroon text-xl">McOutlines</h1>
 					<p className="text-mcmaster-gray text-sm">
 						Find and share course outlines
 					</p>
@@ -18,4 +16,4 @@ export function Header() {
 			</div>
 		</header>
 	);
-} 
+}

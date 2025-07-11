@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import {
 	FileArchiveIcon,
@@ -11,7 +10,9 @@ import {
 	FileTextIcon,
 	FileVideoIcon,
 } from "lucide-react";
+import Image from "next/image";
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 const ROOT_NAME = "FileUpload";
 const DROPZONE_NAME = "FileUploadDropzone";
@@ -372,6 +373,47 @@ function FileUploadRoot(props: FileUploadRootProps) {
 		}
 	}, [value, defaultValue, isControlled, store]);
 
+	const onFilesUpload = React.useCallback(
+		async (files: File[]) => {
+			try {
+				for (const file of files) {
+					store.dispatch({ type: "SET_PROGRESS", file, progress: 0 });
+				}
+
+				if (onUpload) {
+					await onUpload(files, {
+						onProgress,
+						onSuccess: (file) => {
+							store.dispatch({ type: "SET_SUCCESS", file });
+						},
+						onError: (file, error) => {
+							store.dispatch({
+								type: "SET_ERROR",
+								file,
+								error: error.message ?? "Upload failed",
+							});
+						},
+					});
+				} else {
+					for (const file of files) {
+						store.dispatch({ type: "SET_SUCCESS", file });
+					}
+				}
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error ? error.message : "Upload failed";
+				for (const file of files) {
+					store.dispatch({
+						type: "SET_ERROR",
+						file,
+						error: errorMessage,
+					});
+				}
+			}
+		},
+		[store, onUpload, onProgress],
+	);
+
 	const onFilesChange = React.useCallback(
 		(originalFiles: File[]) => {
 			if (disabled) return;
@@ -495,6 +537,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
 			onAccept,
 			onFileAccept,
 			onUpload,
+			onFilesUpload,
 			maxFiles,
 			onFileValidate,
 			onFileReject,
@@ -502,47 +545,6 @@ function FileUploadRoot(props: FileUploadRootProps) {
 			maxSize,
 			disabled,
 		],
-	);
-
-	const onFilesUpload = React.useCallback(
-		async (files: File[]) => {
-			try {
-				for (const file of files) {
-					store.dispatch({ type: "SET_PROGRESS", file, progress: 0 });
-				}
-
-				if (onUpload) {
-					await onUpload(files, {
-						onProgress,
-						onSuccess: (file) => {
-							store.dispatch({ type: "SET_SUCCESS", file });
-						},
-						onError: (file, error) => {
-							store.dispatch({
-								type: "SET_ERROR",
-								file,
-								error: error.message ?? "Upload failed",
-							});
-						},
-					});
-				} else {
-					for (const file of files) {
-						store.dispatch({ type: "SET_SUCCESS", file });
-					}
-				}
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "Upload failed";
-				for (const file of files) {
-					store.dispatch({
-						type: "SET_ERROR",
-						file,
-						error: errorMessage,
-					});
-				}
-			}
-		},
-		[store, onUpload, onProgress],
 	);
 
 	const onInputChange = React.useCallback(
@@ -759,7 +761,7 @@ function FileUploadDropzone(props: FileUploadDropzoneProps) {
 		(event: React.KeyboardEvent<HTMLDivElement>) => {
 			onKeyDownProp?.(event);
 		},
-		[context.inputRef, onKeyDownProp],
+		[onKeyDownProp],
 	);
 
 	const DropzonePrimitive = asChild ? Slot : "div";
@@ -890,7 +892,8 @@ function useFileUploadItemContext(consumerName: string) {
 	return context;
 }
 
-interface FileUploadItemProps extends React.ComponentPropsWithoutRef<"div"> {
+interface FileUploadItemProps
+	extends Omit<React.ComponentPropsWithoutRef<"li">, "value"> {
 	value: File;
 	asChild?: boolean;
 }
@@ -934,12 +937,11 @@ function FileUploadItem(props: FileUploadItemProps) {
 				? "Upload complete"
 				: "Ready to upload";
 
-	const ItemPrimitive = asChild ? Slot : "div";
+	const ItemPrimitive = asChild ? Slot : "li";
 
 	return (
 		<FileUploadItemContext.Provider value={itemContext}>
 			<ItemPrimitive
-				role="listitem"
 				id={id}
 				aria-setsize={fileCount}
 				aria-posinset={fileIndex}
@@ -1049,10 +1051,12 @@ function FileUploadItemPreview(props: FileUploadItemPreviewProps) {
 					urlCache.set(file, url);
 				}
 				return (
-					<img
+					<Image
 						src={url}
 						alt={file.name}
 						className="size-full object-cover"
+						fill
+						sizes="40px"
 						onLoad={(event) => {
 							if (!(event.target instanceof HTMLImageElement)) return;
 							const cachedUrl = urlCache.get(file);
@@ -1202,6 +1206,7 @@ function FileUploadItemProgress(props: FileUploadItemProgressProps) {
 					)}
 				>
 					<svg
+						aria-hidden="true"
 						className="rotate-[-90deg] transform"
 						width={size}
 						height={size}

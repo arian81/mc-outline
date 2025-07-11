@@ -4,11 +4,11 @@ export default async function CoursePage({
 	params: Promise<{ major: string; course_code: string }>;
 }) {
 	const { major, course_code } = await params;
-	
+
 	return (
 		<div className="container mx-auto px-4 py-8">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold mb-4">
+				<h1 className="mb-4 font-bold text-2xl">
 					{major.toUpperCase()} - {course_code.toUpperCase()}
 				</h1>
 				<p className="text-gray-600">
@@ -17,4 +17,4 @@ export default async function CoursePage({
 			</div>
 		</div>
 	);
-} 
+}
