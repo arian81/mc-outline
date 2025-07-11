@@ -205,9 +205,6 @@ export default function ReviewPage() {
 							<h1 className="mb-2 font-bold text-3xl text-mcmaster-maroon">
 								Review Your Files
 							</h1>
-							<p className="text-mcmaster-gray text-lg">
-								Review and edit your uploaded files before submitting
-							</p>
 						</div>
 						<Button
 							variant="outline"
