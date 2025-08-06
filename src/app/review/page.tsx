@@ -80,18 +80,16 @@ export default function ReviewPage() {
 
 	return (
 		<div className="container mx-auto p-6">
-			<h1 className="mb-6 font-bold text-3xl">Review Uploaded PDFs</h1>
-
 			{currentFile ? (
 				<div className="flex items-center justify-center">
 					<div className="mx-auto w-full max-w-4xl px-4 py-6">
 						<div className="relative">
 							{/* Background cards for stacked effect */}
-							<div className="-bottom-6 -right-6 absolute h-full w-full rounded-lg border"></div>
-							<div className="-bottom-3 -right-3 absolute h-full w-full rounded-lg border"></div>
+							<div className="-bottom-6 -right-6 absolute h-full w-full rounded-lg border bg-white shadow-lg"></div>
+							<div className="-bottom-3 -right-3 absolute h-full w-full rounded-lg border bg-white shadow-md"></div>
 
 							{/* Main card */}
-							<Card className="relative min-h-[400px] w-full">
+							<Card className="relative min-h-[400px] w-full bg-white shadow-xl">
 								<CardHeader>
 									<CardTitle>{currentFile.originalName}</CardTitle>
 									<CardDescription>
