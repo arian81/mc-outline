@@ -1,8 +1,9 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { TRPCReactProvider } from "@/trpc/react";
 import { ReactScanProvider } from "@/components/ReactScanProvider";
+import { Toaster } from "@/components/ui/sonner";
+import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
@@ -23,6 +24,7 @@ export default function RootLayout({
 			<body>
 				<ReactScanProvider>
 					<TRPCReactProvider>{children}</TRPCReactProvider>
+					<Toaster />
 				</ReactScanProvider>
 			</body>
 		</html>

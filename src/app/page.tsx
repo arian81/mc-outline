@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useFileStorage } from "@/lib/opfs";
+import { useUploadFile } from "@/lib/opfs";
 
 type Course = {
 	id: number;
@@ -36,18 +36,14 @@ export default function Component() {
 	const searchContainerRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
-	const { uploadFile } = useFileStorage();
+	const { mutateAsync: uploadFile } = useUploadFile();
 
 	const handleCourseSelection = (course: Course) => {
-		console.log("Selected course:", course);
-		// Clear search and return to original state
 		setSearchValue("");
 		setHighlightedIndex(-1);
-		// Navigate to the course page
 		router.push(`/${course.major}/${course.course_code}`);
 	};
 
-	// Handle clicks outside the search area
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -66,7 +62,6 @@ export default function Component() {
 	}, []);
 
 	useEffect(() => {
-		// Dynamically import the mock data JSON
 		import("@/data/mockCourses.json")
 			.then((module) => {
 				setMockCourses(module.default as Course[]);
@@ -141,7 +136,6 @@ export default function Component() {
 		async (
 			files: File[],
 			{
-				onProgress,
 				onSuccess,
 				onError,
 			}: {
@@ -152,23 +146,29 @@ export default function Component() {
 		) => {
 			try {
 				const successfulUploads: File[] = [];
-				
+
 				// Process each file
 				for (const file of files) {
 					try {
 						// Validate file type
-						if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+						if (
+							!file.type.includes("pdf") &&
+							!file.name.toLowerCase().endsWith(".pdf")
+						) {
 							onError(file, new Error("Only PDF files are allowed"));
 							continue;
 						}
 
-						// Use the hook's uploadFile method
-						await uploadFile(file, {
-							name: file.name,
-							originalName: file.name,
-							size: file.size,
-							type: file.type,
-							lastModified: file.lastModified,
+						// Use the TanStack Query mutation
+						await uploadFile({
+							file,
+							metadata: {
+								name: file.name,
+								originalName: file.name,
+								size: file.size,
+								type: file.type,
+								lastModified: file.lastModified,
+							},
 						});
 
 						successfulUploads.push(file);
@@ -176,7 +176,9 @@ export default function Component() {
 					} catch (error) {
 						onError(
 							file,
-							error instanceof Error ? error : new Error("Failed to process file"),
+							error instanceof Error
+								? error
+								: new Error("Failed to process file"),
 						);
 					}
 				}
@@ -335,8 +337,6 @@ export default function Component() {
 										<span>ps: drag and drop works too 😉</span>
 									</div>
 								</div>
-
-
 							</div>
 						</div>
 					</div>

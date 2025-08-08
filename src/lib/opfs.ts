@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { err, ok, type Result } from "neverthrow";
 import { z } from "zod";
 
 const UploadedFileDataSchema = z.object({
@@ -11,321 +12,381 @@ const UploadedFileDataSchema = z.object({
 	type: z.string(),
 	lastModified: z.number(),
 	uploadedAt: z.string(),
-	customMetadata: z
-		.object({
-			courseCode: z.string().optional(),
-			semester: z.string().optional(),
-			description: z.string().optional(),
-		})
-		.optional(),
+	courseCode: z.string().optional(),
+	semester: z.string().optional(),
+	description: z.string().optional(),
 });
 
 type UploadedFileData = z.infer<typeof UploadedFileDataSchema>;
 
-type UseFileStorageReturn = {
-	files: UploadedFileData[];
-	isLoading: boolean;
-	error: string | null;
-	uploadFile: (
+type FileWithMetadata = {
+	file: File;
+	metadata: UploadedFileData;
+};
+
+type FileStorageError = {
+	code:
+		| "OPFS_NOT_SUPPORTED"
+		| "FILE_NOT_FOUND"
+		| "SAVE_FAILED"
+		| "DELETE_FAILED"
+		| "UPDATE_FAILED"
+		| "LOAD_FAILED"
+		| "VALIDATION_FAILED";
+	message: string;
+	cause?: unknown;
+};
+
+class OPFS {
+	private root: FileSystemDirectoryHandle | null = null;
+	private rootPromise: Promise<FileSystemDirectoryHandle> | null = null;
+
+	private async getRoot(): Promise<FileSystemDirectoryHandle> {
+		if (this.root) {
+			return this.root;
+		}
+
+		if (this.rootPromise) {
+			return this.rootPromise;
+		}
+
+		this.rootPromise = this.initializeRoot();
+		this.root = await this.rootPromise;
+		return this.root;
+	}
+
+	private async initializeRoot(): Promise<FileSystemDirectoryHandle> {
+		if (!isOPFSSupported()) {
+			throw createError(
+				"OPFS_NOT_SUPPORTED",
+				"OPFS is not supported in this browser",
+			);
+		}
+
+		try {
+			return await navigator.storage.getDirectory();
+		} catch (error) {
+			throw createError("LOAD_FAILED", "Failed to access OPFS", error);
+		}
+	}
+
+	async saveFile(
 		file: File,
-		metadata: Omit<UploadedFileData, "id" | "uploadedAt">,
-	) => Promise<void>;
-	deleteFile: (fileId: string) => Promise<void>;
-	updateFileMetadata: (
+		metadata: UploadedFileData,
+	): Promise<Result<void, FileStorageError>> {
+		try {
+			const root = await this.getRoot();
+
+			const fileHandle = await root.getFileHandle(`${metadata.id}.pdf`, {
+				create: true,
+			});
+			const writable = await fileHandle.createWritable();
+			await writable.write(file);
+			await writable.close();
+
+			const metadataHandle = await root.getFileHandle(
+				`${metadata.id}.meta.json`,
+				{ create: true },
+			);
+			const metadataWritable = await metadataHandle.createWritable();
+			await metadataWritable.write(JSON.stringify(metadata));
+			await metadataWritable.close();
+
+			return ok(undefined);
+		} catch (error) {
+			if (error instanceof Error && "code" in error) {
+				return err(error as FileStorageError);
+			}
+			return err(
+				createError("SAVE_FAILED", "Failed to save file to OPFS", error),
+			);
+		}
+	}
+
+	async deleteFile(fileId: string): Promise<Result<void, FileStorageError>> {
+		try {
+			const root = await this.getRoot();
+
+			await Promise.all([
+				root.removeEntry(`${fileId}.pdf`).catch(() => {}),
+				root.removeEntry(`${fileId}.meta.json`).catch(() => {}),
+			]);
+			return ok();
+		} catch (error) {
+			if (error instanceof Error && "code" in error) {
+				return err(error as FileStorageError);
+			}
+			return err(
+				createError("DELETE_FAILED", "Failed to delete file from OPFS", error),
+			);
+		}
+	}
+
+	async updateFileMetadata(
 		fileId: string,
 		updatedMetadata: UploadedFileData,
-	) => Promise<void>;
-	getFile: (fileId: string) => Promise<File | null>;
-	clearAllFiles: () => Promise<void>;
-	refreshFiles: () => Promise<void>;
-};
-
-const isOPFSSupported = (): boolean => {
-	return (
-		typeof window !== "undefined" &&
-		"storage" in navigator &&
-		"getDirectory" in navigator.storage
-	);
-};
-
-const getOPFSRoot = async (): Promise<FileSystemDirectoryHandle> => {
-	if (!isOPFSSupported()) {
-		throw new Error("OPFS is not supported in this browser");
-	}
-	return await navigator.storage.getDirectory();
-};
-
-const saveFileToOPFS = async (
-	file: File,
-	metadata: UploadedFileData,
-): Promise<void> => {
-	const root = await getOPFSRoot();
-	const fileHandle = await root.getFileHandle(`${metadata.id}.pdf`, {
-		create: true,
-	});
-	const writable = await fileHandle.createWritable();
-	await writable.write(file);
-	await writable.close();
-	const metadataHandle = await root.getFileHandle(`${metadata.id}.meta.json`, {
-		create: true,
-	});
-	const metadataWritable = await metadataHandle.createWritable();
-	await metadataWritable.write(JSON.stringify(metadata));
-	await metadataWritable.close();
-};
-const updateFileMetadataInOPFS = async (
-	fileId: string,
-	updatedMetadata: UploadedFileData,
-): Promise<void> => {
-	const root = await getOPFSRoot();
-	const metadataHandle = await root.getFileHandle(`${fileId}.meta.json`, {
-		create: false,
-	});
-	const writable = await metadataHandle.createWritable();
-	await writable.write(JSON.stringify(updatedMetadata));
-	await writable.close();
-};
-
-export const useFileStorage = (): UseFileStorageReturn => {
-	const [files, setFiles] = useState<UploadedFileData[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	const supportsOPFS = isOPFSSupported();
-
-	const refreshFiles = useCallback(async () => {
-		setIsLoading(true);
-		setError(null);
-
+	): Promise<Result<void, FileStorageError>> {
 		try {
-			let loadedFiles: UploadedFileData[];
+			const root = await this.getRoot();
 
-			if (supportsOPFS) {
-				const root = await navigator.storage.getDirectory();
-				const files: UploadedFileData[] = [];
+			const metadataHandle = await root.getFileHandle(`${fileId}.meta.json`, {
+				create: false,
+			});
+			const writable = await metadataHandle.createWritable();
+			await writable.write(JSON.stringify(updatedMetadata));
+			await writable.close();
 
-				for await (const handle of root.values()) {
-					if (handle.kind === "file" && handle.name.endsWith(".meta.json")) {
-						try {
-							const file = await handle.getFile();
-							const text = await file.text();
-							const parsed = JSON.parse(text);
-							const metadata = UploadedFileDataSchema.parse(parsed);
-							files.push(metadata);
-						} catch (error) {
-							console.warn(
-								`Failed to read or validate metadata for ${handle.name}:`,
-								error,
-							);
-						}
-					}
-				}
-
-				loadedFiles = files.sort(
-					(a, b) =>
-						new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
-				);
-			} else {
-				try {
-					const saved = sessionStorage.getItem("uploaded-files");
-					if (!saved) {
-						loadedFiles = [];
-					} else {
-						const parsed = JSON.parse(saved);
-						loadedFiles = z.array(UploadedFileDataSchema).parse(parsed);
-					}
-				} catch (error) {
-					console.warn("Failed to validate files from sessionStorage:", error);
-					loadedFiles = [];
-				}
+			return ok(undefined);
+		} catch (error) {
+			if (error instanceof Error && "code" in error) {
+				return err(error as FileStorageError);
 			}
-
-			setFiles(loadedFiles);
-		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : "Failed to load files";
-			setError(errorMessage);
-			console.error("Failed to load files:", err);
-		} finally {
-			setIsLoading(false);
+			return err(
+				createError("UPDATE_FAILED", "Failed to update file metadata", error),
+			);
 		}
-	}, [supportsOPFS]);
+	}
 
-	useEffect(() => {
-		refreshFiles();
-	}, [refreshFiles]);
+	async getFile(
+		fileId: string,
+	): Promise<Result<FileWithMetadata, FileStorageError>> {
+		try {
+			const root = await this.getRoot();
 
-	const uploadFile = useCallback(
-		async (
-			file: File,
-			metadata: Omit<UploadedFileData, "id" | "uploadedAt">,
-		) => {
-			setError(null);
+			const [fileHandle, metadataHandle] = await Promise.all([
+				root.getFileHandle(`${fileId}.pdf`),
+				root.getFileHandle(`${fileId}.meta.json`),
+			]);
 
-			try {
-				const fileData: UploadedFileData = {
-					...metadata,
-					id: crypto.randomUUID(),
-					uploadedAt: new Date().toISOString(),
-				};
+			const [file, metadataFile] = await Promise.all([
+				fileHandle.getFile(),
+				metadataHandle.getFile(),
+			]);
 
-				if (supportsOPFS) {
-					await saveFileToOPFS(file, fileData);
-				} else {
-					const updatedFiles = [fileData, ...files];
-					sessionStorage.setItem(
-						"uploaded-files",
-						JSON.stringify(updatedFiles),
-					);
-					setFiles(updatedFiles);
-					return;
-				}
+			const metadataText = await metadataFile.text();
+			const parsedMetadata = JSON.parse(metadataText);
+			const metadata = UploadedFileDataSchema.parse(parsedMetadata);
 
-				await refreshFiles();
-			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : "Failed to upload file";
-				setError(errorMessage);
-				throw err;
+			return ok({ file, metadata });
+		} catch (error) {
+			if (error instanceof Error && "code" in error) {
+				return err(error as FileStorageError);
 			}
-		},
-		[supportsOPFS, files, refreshFiles],
-	);
+			return err(
+				createError(
+					"LOAD_FAILED",
+					"Failed to get file or metadata from OPFS",
+					error,
+				),
+			);
+		}
+	}
 
-	const deleteFile = useCallback(
-		async (fileId: string) => {
-			setError(null);
+	async getAllFiles(): Promise<Result<FileWithMetadata[], FileStorageError>> {
+		try {
+			const root = await this.getRoot();
 
-			try {
-				if (supportsOPFS) {
-					const root = await getOPFSRoot();
-					await Promise.all([
-						root.removeEntry(`${fileId}.pdf`).catch(() => {}),
-						root.removeEntry(`${fileId}.meta.json`).catch(() => {}),
+			const files: FileWithMetadata[] = [];
+			const metadataFiles: string[] = [];
+			for await (const handle of root.values()) {
+				if (handle.kind === "file" && handle.name.endsWith(".meta.json")) {
+					metadataFiles.push(handle.name);
+				}
+			}
+
+			const filePromises = metadataFiles.map(async (metadataFileName) => {
+				const fileId = metadataFileName.replace(".meta.json", "");
+				const fileName = `${fileId}.pdf`;
+
+				try {
+					const [fileHandle, metadataHandle] = await Promise.all([
+						root.getFileHandle(fileName),
+						root.getFileHandle(metadataFileName),
 					]);
-				} else {
-					const updatedFiles = files.filter((f) => f.id !== fileId);
-					sessionStorage.setItem(
-						"uploaded-files",
-						JSON.stringify(updatedFiles),
-					);
-					setFiles(updatedFiles);
-					return;
-				}
 
-				await refreshFiles();
-			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : "Failed to delete file";
-				setError(errorMessage);
-				throw err;
-			}
-		},
-		[supportsOPFS, files, refreshFiles],
-	);
+					const [file, metadataFile] = await Promise.all([
+						fileHandle.getFile(),
+						metadataHandle.getFile(),
+					]);
 
-	const updateFileMetadata = useCallback(
-		async (fileId: string, updatedMetadata: UploadedFileData) => {
-			setError(null);
+					const metadataText = await metadataFile.text();
+					const parsedMetadata = JSON.parse(metadataText);
+					const metadata = UploadedFileDataSchema.parse(parsedMetadata);
 
-			try {
-				if (supportsOPFS) {
-					await updateFileMetadataInOPFS(fileId, updatedMetadata);
-				} else {
-					const updatedFiles = files.map((f) =>
-						f.id === fileId ? updatedMetadata : f,
-					);
-					sessionStorage.setItem(
-						"uploaded-files",
-						JSON.stringify(updatedFiles),
-					);
-					setFiles(updatedFiles);
-					return;
-				}
-
-				await refreshFiles();
-			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : "Failed to update file metadata";
-				setError(errorMessage);
-				throw err;
-			}
-		},
-		[supportsOPFS, files, refreshFiles],
-	);
-
-	const getFile = useCallback(
-		async (fileId: string): Promise<File | null> => {
-			setError(null);
-
-			try {
-				if (supportsOPFS) {
-					const root = await getOPFSRoot();
-					const fileHandle = await root.getFileHandle(`${fileId}.pdf`);
-					return await fileHandle.getFile();
-				} else {
-					console.warn(
-						"File retrieval not supported with sessionStorage fallback",
-					);
+					return { file, metadata };
+				} catch (error) {
+					console.warn(`Failed to load file ${fileId}:`, error);
 					return null;
 				}
-			} catch (err) {
-				const errorMessage =
-					err instanceof Error ? err.message : "Failed to get file";
-				setError(errorMessage);
-				return null;
-			}
-		},
-		[supportsOPFS],
-	);
+			});
 
-	const clearAllFiles = useCallback(async () => {
-		setError(null);
-
-		try {
-			if (supportsOPFS) {
-				const root = await getOPFSRoot();
-
-				const filesToDelete: string[] = [];
-				for await (const [_, handle] of root.entries()) {
-					if (
-						handle.name.endsWith(".pdf") ||
-						handle.name.endsWith(".meta.json")
-					) {
-						filesToDelete.push(handle.name);
-					}
+			const results = await Promise.all(filePromises);
+			for (const result of results) {
+				if (result !== null) {
+					files.push(result);
 				}
-
-				await Promise.all(
-					filesToDelete.map((name) => root.removeEntry(name).catch(() => {})),
-				);
-			} else {
-				sessionStorage.removeItem("uploaded-files");
-				setFiles([]);
-				return;
 			}
 
-			await refreshFiles();
-		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : "Failed to clear files";
-			setError(errorMessage);
-			throw err;
+			files.sort(
+				(a, b) =>
+					new Date(b.metadata.uploadedAt).getTime() -
+					new Date(a.metadata.uploadedAt).getTime(),
+			);
+			return ok(files);
+		} catch (error) {
+			if (error instanceof Error && "code" in error) {
+				return err(error as FileStorageError);
+			}
+			return err(
+				createError("LOAD_FAILED", "Failed to list files from OPFS", error),
+			);
 		}
-	}, [supportsOPFS, refreshFiles]);
+	}
+}
 
-	return {
-		files,
-		isLoading,
-		error,
-		uploadFile,
-		deleteFile,
-		updateFileMetadata,
-		getFile,
-		clearAllFiles,
-		refreshFiles,
-	};
+const isOPFSSupported = (): boolean =>
+	typeof window !== "undefined" &&
+	"storage" in navigator &&
+	"getDirectory" in navigator.storage;
+
+const createError = (
+	code: FileStorageError["code"],
+	message: string,
+	cause?: unknown,
+): FileStorageError => ({
+	code,
+	message,
+	cause,
+});
+
+// Singleton instance of OPFS, I don't wanna create a context
+//TODO: use a context for this
+const opfsInstance = new OPFS();
+
+export const useUploadFile = () => {
+	const supportsOPFS = isOPFSSupported();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			file,
+			metadata,
+		}: {
+			file: File;
+			metadata: Omit<UploadedFileData, "id" | "uploadedAt">;
+		}) => {
+			if (!supportsOPFS) {
+				throw new Error("OPFS is not supported in this browser");
+			}
+
+			const fileData: UploadedFileData = {
+				...metadata,
+				id: crypto.randomUUID(),
+				uploadedAt: new Date().toISOString(),
+			};
+
+			const result = await opfsInstance.saveFile(file, fileData);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return fileData;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["opfs-files"] });
+		},
+	});
 };
 
-export { UploadedFileDataSchema };
-export type { UploadedFileData };
+export const useDeleteFile = () => {
+	const supportsOPFS = isOPFSSupported();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (fileId: string) => {
+			if (!supportsOPFS) {
+				throw new Error("OPFS is not supported in this browser");
+			}
+
+			const result = await opfsInstance.deleteFile(fileId);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["opfs-files"] });
+		},
+	});
+};
+
+export const useUpdateFileMetadata = () => {
+	const supportsOPFS = isOPFSSupported();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			fileId,
+			updatedMetadata,
+		}: {
+			fileId: string;
+			updatedMetadata: UploadedFileData;
+		}) => {
+			if (!supportsOPFS) {
+				throw new Error("OPFS is not supported in this browser");
+			}
+
+			const result = await opfsInstance.updateFileMetadata(
+				fileId,
+				updatedMetadata,
+			);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["opfs-files"] });
+		},
+	});
+};
+
+export const useGetFile = (fileId: string) => {
+	const supportsOPFS = isOPFSSupported();
+
+	return useQuery({
+		queryKey: ["opfs-file", fileId],
+		queryFn: async () => {
+			if (!supportsOPFS) {
+				throw new Error("OPFS is not supported in this browser");
+			}
+
+			const result = await opfsInstance.getFile(fileId);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
+		},
+	});
+};
+
+export const useGetAllFiles = () => {
+	const supportsOPFS = isOPFSSupported();
+
+	return useQuery({
+		queryKey: ["opfs-files"],
+		queryFn: async () => {
+			if (!supportsOPFS) {
+				throw new Error("OPFS is not supported in this browser");
+			}
+
+			const result = await opfsInstance.getAllFiles();
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
+		},
+	});
+};
+
+// export { UploadedFileDataSchema, OPFS, opfsInstance };
+// export type { UploadedFileData, FileWithMetadata, FileStorageError };

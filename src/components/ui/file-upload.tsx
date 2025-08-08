@@ -482,8 +482,6 @@ function FileUploadRoot(props: FileUploadRootProps) {
 					}
 				}
 
-
-
 				if (!rejected) {
 					acceptedFiles.push(file);
 				} else {
