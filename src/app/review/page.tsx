@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
+import clsx from "clsx";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,10 +16,13 @@ import {
 export default function ReviewPage() {
 	const { data: files, isLoading, isError, error } = useGetAllFiles();
 	const [currentIndex, setCurrentIndex] = useState(0);
-
-	const currentFile = files?.[currentIndex] ?? null;
 	const updateMetadata = useUpdateFileMetadata();
 	const deleteFile = useDeleteFile();
+
+	const currentFile = files?.[currentIndex] ?? null;
+	const totalFiles = files?.length ?? 0;
+	const isFirst = currentIndex === 0;
+	const isLast = currentIndex >= totalFiles - 1;
 
 	const form = useForm({
 		defaultValues: {
@@ -38,14 +42,23 @@ export default function ReviewPage() {
 
 	const handleNext = async () => {
 		await form.handleSubmit();
-		if (currentIndex < (files?.length ?? 1) - 1) {
+		if (!isLast) {
 			setCurrentIndex(currentIndex + 1);
 		}
 	};
 
+	const handleSubmitAll = async () => {
+		await form.handleSubmit();
+		console.log("Submit clicked on review page", {
+			totalFiles: files?.length ?? 0,
+			currentIndex,
+			currentFileName: currentFile?.metadata.originalName,
+		});
+	};
+
 	const handlePrevious = async () => {
 		await form.handleSubmit();
-		if (currentIndex > 0) {
+		if (!isFirst) {
 			setCurrentIndex(currentIndex - 1);
 		}
 	};
@@ -57,12 +70,16 @@ export default function ReviewPage() {
 			await deleteFile.mutateAsync(currentFile.metadata.id);
 			toast.success(`Deleted "${currentFile.metadata.originalName}"`);
 
-			// Adjust current index after deletion
-			const newFilesLength = (files?.length ?? 1) - 1;
-			if (newFilesLength === 0) {
-				setCurrentIndex(0);
-			} else if (currentIndex >= newFilesLength) {
-				setCurrentIndex(Math.max(0, newFilesLength - 1));
+			// Adjust current index after deletion. Two branches:
+			// - Case 1: If we deleted the last item, move to the new last valid index
+			//           (or 0 when the list becomes empty).
+			// - Case 2: Otherwise, we deleted something before the end; keep the same
+			//           index so the next file naturally shifts into view.
+			const newTotalFiles = totalFiles - 1;
+			if (currentIndex >= newTotalFiles) {
+				setCurrentIndex(Math.max(0, newTotalFiles - 1));
+			} else {
+				setCurrentIndex(currentIndex);
 			}
 		} catch (error) {
 			toast.error(
@@ -239,7 +256,7 @@ export default function ReviewPage() {
 												Size:{" "}
 												<span
 													className={`font-medium ${
-														(currentFile.metadata.size / 1024 / 1024) < 1
+														currentFile.metadata.size / 1024 / 1024 < 1
 															? "text-green-600"
 															: currentFile.metadata.size / 1024 / 1024 <= 10
 																? "text-yellow-600"
@@ -263,20 +280,24 @@ export default function ReviewPage() {
 									<div className="flex gap-2 border-t bg-gray-50/50 p-3">
 										<Button
 											onClick={handlePrevious}
-											disabled={currentIndex === 0 || (files?.length ?? 0) <= 1}
-											className="flex-1"
+											disabled={isFirst}
+											className={clsx("flex-1", { hidden: totalFiles <= 1 })}
 										>
 											← Previous
 										</Button>
+
 										<Button
 											onClick={handleNext}
-											disabled={
-												currentIndex === (files?.length ?? 1) - 1 ||
-												(files?.length ?? 0) <= 1
-											}
-											className="flex-1"
+											className={clsx("flex-1", { hidden: isLast })}
 										>
 											Next →
+										</Button>
+
+										<Button
+											onClick={handleSubmitAll}
+											className={clsx("flex-1", { hidden: !isLast })}
+										>
+											Submit
 										</Button>
 									</div>
 								</div>
