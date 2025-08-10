@@ -6,11 +6,14 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
+
+import { App } from "octokit";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "@/server/db";
+import { env } from "@/env";
 
 /**
  * 1. CONTEXT
@@ -25,8 +28,14 @@ import { db } from "@/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+	const githubApp = new App({
+		appId: env.GITHUB_APP_ID,
+		privateKey: env.GITHUB_PRIVATE_KEY,
+	});
+	const github = await githubApp.getInstallationOctokit(env.GITHUB_APP_INSTALLATION_ID);
 	return {
 		db,
+		github,
 		...opts,
 	};
 };

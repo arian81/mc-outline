@@ -8,6 +8,9 @@ export const env = createEnv({
 	 */
 	server: {
 		DATABASE_URL: z.string().url(),
+		GITHUB_APP_ID: z.string(),
+		GITHUB_PRIVATE_KEY: z.string(),
+		GITHUB_APP_INSTALLATION_ID: z.string().transform((val) => parseInt(val)),
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),
@@ -29,6 +32,9 @@ export const env = createEnv({
 	runtimeEnv: {
 		DATABASE_URL: process.env.DATABASE_URL,
 		NODE_ENV: process.env.NODE_ENV,
+		GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+		GITHUB_APP_INSTALLATION_ID: process.env.GITHUB_APP_INSTALLATION_ID,
+		GITHUB_PRIVATE_KEY: process.env.GITHUB_PRIVATE_KEY,
 		// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 	},
 	/**

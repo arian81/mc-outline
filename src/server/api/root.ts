@@ -1,3 +1,4 @@
+import { githubRouter } from "@/server/api/routers/github";
 import {
 	createCallerFactory,
 	createTRPCRouter,
@@ -11,6 +12,7 @@ import {
  */
 export const appRouter = createTRPCRouter({
 	health: publicProcedure.query(() => "OK"),
+	github: githubRouter,
 });
 
 // export type definition of API
