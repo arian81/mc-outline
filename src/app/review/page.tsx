@@ -2,6 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export default function ReviewPage() {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const updateMetadata = useUpdateFileMetadata();
 	const deleteFile = useDeleteFile();
-
+	const router = useRouter();
 	const currentFile = files?.[currentIndex] ?? null;
 	const totalFiles = files?.length ?? 0;
 	const isFirst = currentIndex === 0;
@@ -88,6 +89,7 @@ export default function ReviewPage() {
 					...value,
 				});
 				toast.success(`Files uploaded to Github`);
+				router.push("/");
 			}
 
 			form.reset();

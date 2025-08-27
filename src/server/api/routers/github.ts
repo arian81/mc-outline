@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { env } from "@/env";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 export const githubRouter = createTRPCRouter({
@@ -21,11 +22,15 @@ export const githubRouter = createTRPCRouter({
 				const arrayBuffer = await file.arrayBuffer();
 				const buffer = Buffer.from(arrayBuffer);
 				const base64Content = buffer.toString("base64");
+				const [owner, repo] = env.GITHUB_OBJECT_STORAGE_REPO.split("/");
+				if (!owner || !repo) {
+					throw new Error("Invalid GitHub object storage repo");
+				}
 
 				const response = await ctx.github.rest.repos.createOrUpdateFileContents(
 					{
-						owner: "arian81",
-						repo: "mcoutline-object-storage",
+						owner,
+						repo,
 						path: path,
 						message: `Upload file: ${file.name}`,
 						content: base64Content,
