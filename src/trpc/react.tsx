@@ -2,7 +2,13 @@
 
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { httpBatchStreamLink, loggerLink } from "@trpc/client";
+import {
+	httpBatchStreamLink,
+	httpLink,
+	isNonJsonSerializable,
+	loggerLink,
+	splitLink,
+} from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
@@ -50,14 +56,31 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 						process.env.NODE_ENV === "development" ||
 						(op.direction === "down" && op.result instanceof Error),
 				}),
-				httpBatchStreamLink({
-					transformer: SuperJSON,
-					url: `${getBaseUrl()}/api/trpc`,
-					headers: () => {
-						const headers = new Headers();
-						headers.set("x-trpc-source", "nextjs-react");
-						return headers;
-					},
+				splitLink({
+					condition: (op) => isNonJsonSerializable(op.input),
+					true: httpLink({
+						url: `${getBaseUrl()}/api/trpc`,
+						transformer: {
+							// request - convert data before sending to the tRPC server
+							serialize: (data) => data,
+							// response - convert the tRPC response before using it in client
+							deserialize: SuperJSON.deserialize, // or your other transformer
+						},
+						headers: () => {
+							const headers = new Headers();
+							headers.set("x-trpc-source", "nextjs-react");
+							return headers;
+						},
+					}),
+					false: httpBatchStreamLink({
+						url: `${getBaseUrl()}/api/trpc`,
+						transformer: SuperJSON,
+						headers: () => {
+							const headers = new Headers();
+							headers.set("x-trpc-source", "nextjs-react");
+							return headers;
+						},
+					}),
 				}),
 			],
 		}),

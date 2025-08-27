@@ -7,10 +7,8 @@ import { z } from "zod";
 const UploadedFileDataSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	originalName: z.string(),
 	size: z.number(),
 	type: z.string(),
-	lastModified: z.number(),
 	uploadedAt: z.string(),
 	courseCode: z.string().optional(),
 	semester: z.string().optional(),
@@ -388,5 +386,4 @@ export const useGetAllFiles = () => {
 	});
 };
 
-// export { UploadedFileDataSchema, OPFS, opfsInstance };
-// export type { UploadedFileData, FileWithMetadata, FileStorageError };
+export { type UploadedFileData, OPFS, opfsInstance };

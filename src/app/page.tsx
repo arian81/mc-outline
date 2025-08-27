@@ -164,10 +164,8 @@ export default function Component() {
 							file,
 							metadata: {
 								name: file.name,
-								originalName: file.name,
 								size: file.size,
 								type: file.type,
-								lastModified: file.lastModified,
 							},
 						});
 

@@ -6,12 +6,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
 import {
+	type UploadedFileData,
 	useDeleteFile,
 	useGetAllFiles,
 	useUpdateFileMetadata,
 } from "@/lib/opfs";
+import { api } from "@/trpc/react";
 
 export default function ReviewPage() {
 	const { data: files, isLoading, isError, error } = useGetAllFiles();
@@ -24,40 +25,131 @@ export default function ReviewPage() {
 	const isFirst = currentIndex === 0;
 	const isLast = currentIndex >= totalFiles - 1;
 
+	const uploadToGithub = api.github.uploadFile.useMutation();
+
+	type FormMeta = {
+		submitAction: "next" | "prev" | "submit" | null;
+	};
+
+	// Metadata is not required to call form.handleSubmit().
+	// Specify what values to use as default if no meta is passed
+	const defaultMeta: FormMeta = {
+		submitAction: null,
+	};
+
+	async function uploadFileWithMetadata(
+		file: File,
+		metadata: UploadedFileData,
+	) {
+		const fileName = file.name.replace(".pdf", "");
+		const formData = new FormData();
+		formData.append("file", file);
+		formData.append(
+			"path",
+			`${metadata.courseCode}/${metadata.semester}/${fileName}.pdf`,
+		);
+		await uploadToGithub.mutateAsync(formData);
+		// upload the metadata as a json file
+		const metadataFormData = new FormData();
+		metadataFormData.append(
+			"file",
+			new Blob([JSON.stringify(metadata)], { type: "application/json" }),
+		);
+		metadataFormData.append(
+			"path",
+			`${metadata.courseCode}/${metadata.semester}/${fileName}.meta.json`,
+		);
+		await uploadToGithub.mutateAsync(metadataFormData);
+	}
+
 	const form = useForm({
 		defaultValues: {
 			courseCode: currentFile?.metadata.courseCode || "",
 			semester: currentFile?.metadata.semester || "",
 			description: currentFile?.metadata.description || "",
 		},
-		onSubmit: async ({ value }) => {
+		onSubmit: async ({ value, meta }) => {
 			if (!currentFile?.metadata.id) return;
+
 			await updateMetadata.mutateAsync({
 				fileId: currentFile.metadata.id,
 				updatedMetadata: { ...currentFile.metadata, ...value },
 			});
+
+			if (meta.submitAction === "submit") {
+				//TODO: This approach is not good. I can't think of a better solution. FIX LATER.
+				files
+					?.filter((file) => file.metadata.id !== currentFile.metadata.id)
+					.map(async (file) => {
+						// console.log(file.metadata)
+						// const formData = new FormData();
+						// formData.append("file", file.file);
+						// formData.append("path", `${file.metadata.courseCode}/${file.metadata.semester}/${file.file.name}`);
+						// await uploadToGithub.mutateAsync(formData);
+						// // upload the metadata as a json file
+						// const metadataFormData = new FormData();
+						// metadataFormData.append("file", new Blob([JSON.stringify(file.metadata)], { type: "application/json" }));
+						// metadataFormData.append("path", `${file.metadata.courseCode}/${file.metadata.semester}/${file.file.name}.json`);
+						// await uploadToGithub.mutateAsync(metadataFormData);
+						await uploadFileWithMetadata(file.file, file.metadata);
+					});
+				// const formData = new FormData();
+				// formData.append("file", currentFile.file);
+				// formData.append("path", `${value.courseCode}/${value.semester}/${currentFile.file.name}`);
+				// await uploadToGithub.mutateAsync(formData);
+				// // upload the metadata as a json file
+				// const metadataFormData = new FormData();
+				// metadataFormData.append("file", new Blob([JSON.stringify({ ...currentFile.metadata, ...value })], { type: "application/json" }));
+				// metadataFormData.append("path", `${value.courseCode}/${value.semester}/${currentFile.file.name}.json`);
+				// await uploadToGithub.mutateAsync(metadataFormData);
+				await uploadFileWithMetadata(currentFile.file, {
+					...currentFile.metadata,
+					...value,
+				});
+				toast.success(`Files uploaded to Github`);
+			}
+
 			form.reset();
+		},
+		onSubmitMeta: defaultMeta,
+		validators: {
+			onChange: ({ value }) => {
+				const errors: string[] = [];
+
+				if (!value.courseCode || value.courseCode.trim() === "") {
+					errors.push("Course code is required");
+				}
+
+				if (!value.semester || value.semester.trim() === "") {
+					errors.push("Semester is required");
+				}
+
+				if (errors.length > 0) {
+					return errors.join(", ");
+				}
+
+				return undefined;
+			},
 		},
 	});
 
 	const handleNext = async () => {
-		await form.handleSubmit();
+		if (!form.state.canSubmit) return;
+
+		await form.handleSubmit({ submitAction: "next" });
 		if (!isLast) {
 			setCurrentIndex(currentIndex + 1);
 		}
 	};
 
 	const handleSubmitAll = async () => {
-		await form.handleSubmit();
-		console.log("Submit clicked on review page", {
-			totalFiles: files?.length ?? 0,
-			currentIndex,
-			currentFileName: currentFile?.metadata.originalName,
-		});
+		if (!form.state.canSubmit) return;
+
+		await form.handleSubmit({ submitAction: "submit" });
 	};
 
 	const handlePrevious = async () => {
-		await form.handleSubmit();
+		await form.handleSubmit({ submitAction: "prev" });
 		if (!isFirst) {
 			setCurrentIndex(currentIndex - 1);
 		}
@@ -68,7 +160,7 @@ export default function ReviewPage() {
 
 		try {
 			await deleteFile.mutateAsync(currentFile.metadata.id);
-			toast.success(`Deleted "${currentFile.metadata.originalName}"`);
+			toast.success(`Deleted "${currentFile.metadata.name}"`);
 
 			// Adjust current index after deletion. Two branches:
 			// - Case 1: If we deleted the last item, move to the new last valid index
@@ -83,7 +175,7 @@ export default function ReviewPage() {
 			}
 		} catch (error) {
 			toast.error(
-				`Failed to delete "${currentFile.metadata.originalName}": ${error instanceof Error ? error.message : "Unknown error"}`,
+				`Failed to delete "${currentFile.metadata.name}": ${error instanceof Error ? error.message : "Unknown error"}`,
 			);
 		}
 	};
@@ -126,7 +218,7 @@ export default function ReviewPage() {
 								<div className="flex flex-1 flex-col p-3">
 									<div className="mb-2 flex-shrink-0">
 										<h2 className="font-semibold text-xl">
-											{currentFile.metadata.originalName}
+											{currentFile.metadata.name}
 										</h2>
 									</div>
 									<div className="min-h-0 flex-1">
@@ -134,7 +226,7 @@ export default function ReviewPage() {
 											<iframe
 												src={URL.createObjectURL(currentFile.file)}
 												className="h-full w-full rounded border"
-												title={`PDF viewer for ${currentFile.metadata.originalName}`}
+												title={`PDF viewer for ${currentFile.metadata.name}`}
 											/>
 										) : (
 											<div className="flex h-full items-center justify-center text-muted-foreground">
@@ -184,14 +276,25 @@ export default function ReviewPage() {
 											</Button>
 										</div>
 										<div className="space-y-2">
-											<form.Field name="courseCode">
+											<form.Field
+												name="courseCode"
+												validators={{
+													onChange: ({ value }) => {
+														if (!value || value.trim() === "") {
+															return "Course code is required";
+														}
+														return undefined;
+													},
+												}}
+											>
 												{(field) => (
 													<div className="space-y-1">
 														<label
 															htmlFor={field.name}
 															className="font-medium text-sm"
 														>
-															Course Code
+															Course Code{" "}
+															<span className="text-red-500">*</span>
 														</label>
 														<Input
 															id={field.name}
@@ -201,19 +304,38 @@ export default function ReviewPage() {
 																field.handleChange(e.target.value)
 															}
 															placeholder="e.g., CS101"
+															className={clsx(
+																field.state.meta.errors.length > 0 &&
+																	"border-red-500 focus:border-red-500",
+															)}
 														/>
+														{field.state.meta.errors.length > 0 && (
+															<p className="text-red-500 text-xs">
+																{field.state.meta.errors[0]}
+															</p>
+														)}
 													</div>
 												)}
 											</form.Field>
 
-											<form.Field name="semester">
+											<form.Field
+												name="semester"
+												validators={{
+													onChange: ({ value }) => {
+														if (!value || value.trim() === "") {
+															return "Semester is required";
+														}
+														return undefined;
+													},
+												}}
+											>
 												{(field) => (
 													<div className="space-y-1">
 														<label
 															htmlFor={field.name}
 															className="font-medium text-sm"
 														>
-															Semester
+															Semester <span className="text-red-500">*</span>
 														</label>
 														<Input
 															id={field.name}
@@ -223,7 +345,16 @@ export default function ReviewPage() {
 																field.handleChange(e.target.value)
 															}
 															placeholder="e.g., Fall 2024"
+															className={clsx(
+																field.state.meta.errors.length > 0 &&
+																	"border-red-500 focus:border-red-500",
+															)}
 														/>
+														{field.state.meta.errors.length > 0 && (
+															<p className="text-red-500 text-xs">
+																{field.state.meta.errors[0]}
+															</p>
+														)}
 													</div>
 												)}
 											</form.Field>
@@ -288,6 +419,7 @@ export default function ReviewPage() {
 
 										<Button
 											onClick={handleNext}
+											disabled={!form.state.canSubmit}
 											className={clsx("flex-1", { hidden: isLast })}
 										>
 											Next →
@@ -295,6 +427,7 @@ export default function ReviewPage() {
 
 										<Button
 											onClick={handleSubmitAll}
+											disabled={!form.state.canSubmit}
 											className={clsx("flex-1", { hidden: !isLast })}
 										>
 											Submit

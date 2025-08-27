@@ -7,13 +7,12 @@
  * need to use are documented accordingly near the end.
  */
 
-import { App } from "octokit";
 import { initTRPC } from "@trpc/server";
+import { App } from "octokit";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
-import { db } from "@/server/db";
 import { env } from "@/env";
+import { db } from "@/server/db";
 
 /**
  * 1. CONTEXT
@@ -32,7 +31,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 		appId: env.GITHUB_APP_ID,
 		privateKey: env.GITHUB_PRIVATE_KEY,
 	});
-	const github = await githubApp.getInstallationOctokit(env.GITHUB_APP_INSTALLATION_ID);
+	const github = await githubApp.getInstallationOctokit(
+		env.GITHUB_APP_INSTALLATION_ID,
+	);
 	return {
 		db,
 		github,
