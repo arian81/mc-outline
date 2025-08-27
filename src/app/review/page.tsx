@@ -81,27 +81,8 @@ export default function ReviewPage() {
 				files
 					?.filter((file) => file.metadata.id !== currentFile.metadata.id)
 					.map(async (file) => {
-						// console.log(file.metadata)
-						// const formData = new FormData();
-						// formData.append("file", file.file);
-						// formData.append("path", `${file.metadata.courseCode}/${file.metadata.semester}/${file.file.name}`);
-						// await uploadToGithub.mutateAsync(formData);
-						// // upload the metadata as a json file
-						// const metadataFormData = new FormData();
-						// metadataFormData.append("file", new Blob([JSON.stringify(file.metadata)], { type: "application/json" }));
-						// metadataFormData.append("path", `${file.metadata.courseCode}/${file.metadata.semester}/${file.file.name}.json`);
-						// await uploadToGithub.mutateAsync(metadataFormData);
 						await uploadFileWithMetadata(file.file, file.metadata);
 					});
-				// const formData = new FormData();
-				// formData.append("file", currentFile.file);
-				// formData.append("path", `${value.courseCode}/${value.semester}/${currentFile.file.name}`);
-				// await uploadToGithub.mutateAsync(formData);
-				// // upload the metadata as a json file
-				// const metadataFormData = new FormData();
-				// metadataFormData.append("file", new Blob([JSON.stringify({ ...currentFile.metadata, ...value })], { type: "application/json" }));
-				// metadataFormData.append("path", `${value.courseCode}/${value.semester}/${currentFile.file.name}.json`);
-				// await uploadToGithub.mutateAsync(metadataFormData);
 				await uploadFileWithMetadata(currentFile.file, {
 					...currentFile.metadata,
 					...value,
