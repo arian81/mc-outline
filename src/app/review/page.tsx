@@ -7,8 +7,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+
 import {
 	type UploadedFileData,
+	useDeleteAllFiles,
 	useDeleteFile,
 	useGetAllFiles,
 	useUpdateFileMetadata,
@@ -18,8 +21,10 @@ import { api } from "@/trpc/react";
 export default function ReviewPage() {
 	const { data: files, isLoading, isError, error } = useGetAllFiles();
 	const [currentIndex, setCurrentIndex] = useState(0);
+	const [isUploading, setIsUploading] = useState(false);
 	const updateMetadata = useUpdateFileMetadata();
 	const deleteFile = useDeleteFile();
+	const deleteAllFiles = useDeleteAllFiles();
 	const router = useRouter();
 	const currentFile = files?.[currentIndex] ?? null;
 	const totalFiles = files?.length ?? 0;
@@ -78,18 +83,34 @@ export default function ReviewPage() {
 			});
 
 			if (meta.submitAction === "submit") {
-				//TODO: This approach is not good. I can't think of a better solution. FIX LATER.
-				files
-					?.filter((file) => file.metadata.id !== currentFile.metadata.id)
-					.map(async (file) => {
-						await uploadFileWithMetadata(file.file, file.metadata);
-					});
-				await uploadFileWithMetadata(currentFile.file, {
-					...currentFile.metadata,
-					...value,
-				});
-				toast.success(`Files uploaded to Github`);
-				router.push("/");
+				setIsUploading(true);
+				try {
+					const otherFiles =
+						files?.filter(
+							(file) => file.metadata.id !== currentFile.metadata.id,
+						) || [];
+					const uploadPromises = [
+						...otherFiles.map((file) =>
+							uploadFileWithMetadata(file.file, file.metadata),
+						),
+						//TODO: This approach is not good. I can't think of a better solution. FIX LATER.
+						uploadFileWithMetadata(currentFile.file, {
+							...currentFile.metadata,
+							...value,
+						}),
+					];
+
+					await Promise.all(uploadPromises);
+					toast.success(`Files uploaded to Github`);
+					await deleteAllFiles.mutateAsync();
+					router.push("/");
+				} catch (error) {
+					toast.error(
+						`Failed to upload files: ${error instanceof Error ? error.message : "Unknown error"}`,
+					);
+				} finally {
+					setIsUploading(false);
+				}
 			}
 
 			form.reset();
@@ -181,6 +202,56 @@ export default function ReviewPage() {
 		return (
 			<div className="container mx-auto p-6 text-center text-muted-foreground">
 				No PDFs uploaded yet
+			</div>
+		);
+	}
+
+	if (isUploading) {
+		return (
+			<div className="container mx-auto p-2">
+				<div className="flex items-center justify-center">
+					<div className="mx-auto w-full max-w-7xl px-1">
+						<div className="flex h-[calc(100vh-12rem)] w-full items-center justify-center rounded-lg border bg-white shadow-xl">
+							<div className="text-center">
+								{/* Upload Icon */}
+								<div className="mb-6 flex justify-center">
+									<Spinner
+										variant="circle"
+										size={180}
+										className="stroke-1 text-mcmaster-maroon"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="100"
+											height="100"
+											viewBox="0 0 24 24"
+											aria-label="Uploading"
+											className="text-mcmaster-maroon"
+										>
+											<title>Uploading</title>
+											<g fill="none">
+												<path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
+												<path
+													fill="currentColor"
+													d="M7.024 2.31a9 9 0 0 1 2.125 1.046A11.4 11.4 0 0 1 12 3c.993 0 1.951.124 2.849.355a9 9 0 0 1 2.124-1.045c.697-.237 1.69-.621 2.28.032c.4.444.5 1.188.571 1.756c.08.634.099 1.46-.111 2.28C20.516 7.415 21 8.652 21 10c0 2.042-1.106 3.815-2.743 5.043a9.5 9.5 0 0 1-2.59 1.356c.214.49.333 1.032.333 1.601v3a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-.991c-.955.117-1.756.013-2.437-.276c-.712-.302-1.208-.77-1.581-1.218c-.354-.424-.74-1.38-1.298-1.566a1 1 0 0 1 .632-1.898c.666.222 1.1.702 1.397 1.088c.48.62.87 1.43 1.63 1.753c.313.133.772.22 1.49.122L8 17.98a4 4 0 0 1 .333-1.581a9.5 9.5 0 0 1-2.59-1.356C4.106 13.815 3 12.043 3 10c0-1.346.483-2.582 1.284-3.618c-.21-.82-.192-1.648-.112-2.283l.005-.038c.073-.582.158-1.267.566-1.719c.59-.653 1.584-.268 2.28-.031Z"
+												/>
+											</g>
+										</svg>
+									</Spinner>
+								</div>
+
+								{/* Upload Message */}
+								<h2 className="mb-2 font-semibold text-2xl text-gray-800">
+									Uploading Your Files
+								</h2>
+								<p className="mb-4 text-gray-600">
+									Please wait while we upload {totalFiles} file
+									{totalFiles !== 1 ? "s" : ""} to GitHub...
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}

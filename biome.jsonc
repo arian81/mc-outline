@@ -26,7 +26,15 @@
 					}
 				}
 			},
-			
+			"complexity": {
+				"noImportantStyles": "off"
+			},
+			"a11y": {
+				"useSemanticElements": "off"
+			},
+			"suspicious": {
+				"noUnknownAtRules": "off"
+			},
 			"recommended": true
 		}
 	}

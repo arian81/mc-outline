@@ -119,6 +119,37 @@ class OPFS {
 			);
 		}
 	}
+	async deleteAllFiles(): Promise<Result<void, FileStorageError>> {
+		try {
+			const root = await this.getRoot();
+
+			const filesToDelete: string[] = [];
+			for await (const handle of root.values()) {
+				if (handle.kind === "file") {
+					filesToDelete.push(handle.name);
+				}
+			}
+
+			await Promise.all(
+				filesToDelete.map((fileName) =>
+					root.removeEntry(fileName).catch(() => {}),
+				),
+			);
+
+			return ok(undefined);
+		} catch (error) {
+			if (error instanceof Error && "code" in error) {
+				return err(error as FileStorageError);
+			}
+			return err(
+				createError(
+					"DELETE_FAILED",
+					"Failed to delete all files from OPFS",
+					error,
+				),
+			);
+		}
+	}
 
 	async updateFileMetadata(
 		fileId: string,
@@ -306,6 +337,28 @@ export const useDeleteFile = () => {
 			}
 
 			const result = await opfsInstance.deleteFile(fileId);
+			if (result.isErr()) {
+				throw result.error;
+			}
+			return result.value;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["opfs-files"] });
+		},
+	});
+};
+
+export const useDeleteAllFiles = () => {
+	const supportsOPFS = isOPFSSupported();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async () => {
+			if (!supportsOPFS) {
+				throw new Error("OPFS is not supported in this browser");
+			}
+
+			const result = await opfsInstance.deleteAllFiles();
 			if (result.isErr()) {
 				throw result.error;
 			}
