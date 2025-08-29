@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+
 import {
 	type UploadedFileData,
 	useDeleteAllFiles,
@@ -219,19 +219,18 @@ export default function ReviewPage() {
 						<div className="flex h-[calc(100vh-12rem)] w-full items-center justify-center rounded-lg border bg-white shadow-xl">
 							<div className="text-center">
 								{/* Upload Icon */}
-								<div className="mb-6 flex justify-center">
-									<Spinner
-										variant="circle"
-										size={180}
-										className="stroke-1 text-mcmaster-maroon"
-									>
+								<div className="mb-12 flex justify-center">
+									<div className="relative inline-flex items-center justify-center">
+										{/* Tailwind spinning circle */}
+										<div className="absolute h-[180px] w-[180px] animate-spin rounded-full border-4 border-mcmaster-maroon border-t-transparent"></div>
+										{/* GitHub icon centered */}
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
 											width="100"
 											height="100"
 											viewBox="0 0 24 24"
 											aria-label="Uploading"
-											className="text-mcmaster-maroon"
+											className="relative z-10 text-mcmaster-maroon"
 										>
 											<title>Uploading</title>
 											<g fill="none">
@@ -242,7 +241,7 @@ export default function ReviewPage() {
 												/>
 											</g>
 										</svg>
-									</Spinner>
+									</div>
 								</div>
 
 								{/* Upload Message */}

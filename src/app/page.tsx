@@ -1,6 +1,8 @@
 "use client";
 
+import { useDebounce } from "@uidotdev/usehooks";
 import { FileText, Search } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,34 +17,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useUploadFile } from "@/lib/opfs";
+import { api } from "@/trpc/react";
 
-type Course = {
-	id: number;
-	major: string;
-	course_code: string;
-	name: string;
-	semester: string;
-	lastUpdated: string;
-	department: string;
-};
-
-export default function Component() {
+export default function App() {
 	const [searchValue, setSearchValue] = useState("");
-	const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 	const [isDragOver, setIsDragOver] = useState(false);
-	const [mockCourses, setMockCourses] = useState<Course[]>([]);
 	const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 	const searchContainerRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
-
 	const { mutateAsync: uploadFile } = useUploadFile();
+	const debouncedSearchValue = useDebounce(searchValue, 300);
 
-	const handleCourseSelection = (course: Course) => {
-		setSearchValue("");
-		setHighlightedIndex(-1);
-		router.push(`/${course.major}/${course.course_code}`);
-	};
+	const { data: searchResults = [], isLoading } = api.courses.search.useQuery(
+		{ query: debouncedSearchValue, limit: 5 },
+		{
+			enabled: debouncedSearchValue.length >= 2,
+			staleTime: 5 * 60 * 1000, // 5 minutes
+		},
+	);
+
+	useEffect(() => {
+		if (searchResults.length > 0) {
+			setHighlightedIndex(0);
+		} else {
+			setHighlightedIndex(-1);
+		}
+	}, [searchResults]);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -61,65 +62,27 @@ export default function Component() {
 		};
 	}, []);
 
-	useEffect(() => {
-		import("@/data/mockCourses.json")
-			.then((module) => {
-				setMockCourses(module.default as Course[]);
-				setFilteredCourses(module.default as Course[]);
-			})
-			.catch((err) => {
-				console.error("Failed to load mock courses", err);
-			});
-	}, []);
-
-	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value;
-		setSearchValue(value);
-
-		if (value.length > 0) {
-			const filtered = mockCourses.filter(
-				(course) =>
-					course.major.toLowerCase().includes(value.toLowerCase()) ||
-					course.course_code.toLowerCase().includes(value.toLowerCase()) ||
-					course.name.toLowerCase().includes(value.toLowerCase()) ||
-					course.department.toLowerCase().includes(value.toLowerCase()),
-			);
-			setFilteredCourses(filtered);
-			// Only highlight the first result if we don't already have a valid highlighted index
-			// or if the filtered results changed
-			if (highlightedIndex < 0 || highlightedIndex >= filtered.length) {
-				setHighlightedIndex(filtered.length > 0 ? 0 : -1);
-			}
-		} else {
-			setFilteredCourses(mockCourses);
-			setHighlightedIndex(-1);
-		}
-	};
-
 	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (!searchValue || filteredCourses.length === 0) return;
+		if (!searchValue || searchResults.length === 0) return;
 
 		switch (e.key) {
 			case "ArrowDown":
 				e.preventDefault();
 				setHighlightedIndex((prev) =>
-					prev < filteredCourses.length - 1 ? prev + 1 : 0,
+					prev < searchResults.length - 1 ? prev + 1 : 0,
 				);
 				break;
 			case "ArrowUp":
 				e.preventDefault();
 				setHighlightedIndex((prev) =>
-					prev > 0 ? prev - 1 : filteredCourses.length - 1,
+					prev > 0 ? prev - 1 : searchResults.length - 1,
 				);
 				break;
 			case "Enter":
-				if (
-					highlightedIndex >= 0 &&
-					highlightedIndex < filteredCourses.length
-				) {
-					const selected = filteredCourses[highlightedIndex];
+				if (highlightedIndex >= 0 && highlightedIndex < searchResults.length) {
+					const selected = searchResults[highlightedIndex];
 					if (selected) {
-						handleCourseSelection(selected);
+						router.push(selected.course_code.split(" ").join("/"));
 					}
 				}
 				break;
@@ -232,7 +195,7 @@ export default function Component() {
 										Find Course Outlines
 									</h2>
 									<p className="text-mcmaster-gray text-xl">
-										Search by course code, name, or department
+										Search by course code, name, or major
 									</p>
 								</div>
 
@@ -245,57 +208,52 @@ export default function Component() {
 										type="text"
 										placeholder="Search for courses..."
 										value={searchValue}
-										onChange={handleSearchChange}
+										onChange={(e) => setSearchValue(e.target.value)}
 										onKeyDown={handleSearchKeyDown}
 										className={`rounded-xl border-2 border-mcmaster-maroon py-6 pr-4 pl-12 text-lg focus-visible:border-mcmaster-yellow focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-mcmaster-yellow/50 ${searchValue.length > 0 ? "border-opacity-100 shadow-2xl" : "border-opacity-50 shadow-lg"}`}
 									/>
 
 									{searchValue && (
 										<div className="absolute top-full right-0 left-0 z-[100] mt-2 max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-											{filteredCourses.length > 0 ? (
+											{isLoading ? (
+												<div className="p-8 text-center">
+													<Search className="mx-auto mb-4 h-6 w-6 animate-spin text-mcmaster-gray" />
+													<p className="text-mcmaster-gray text-sm">
+														Searching courses...
+													</p>
+												</div>
+											) : searchResults.length > 0 ? (
 												<>
 													<div className="border-gray-100 border-b p-4">
 														<p className="font-medium text-mcmaster-gray text-sm">
-															Found {filteredCourses.length} course
-															{filteredCourses.length !== 1 ? "s" : ""} for you
+															Found {searchResults.length} course
+															{searchResults.length !== 1 ? "s" : ""} for you
 														</p>
 													</div>
-													{filteredCourses.map((course, idx) => (
-														<button
-															type="button"
+													{searchResults.map((course, idx) => (
+														<Link
 															key={course.id}
-															className={`flex w-full cursor-pointer items-start gap-3 border-gray-100 border-b p-4 last:border-b-0 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : ""}`}
+															href={course.course_code.split(" ").join("/")}
+															prefetch={true}
+															className={`flex w-full cursor-pointer items-start gap-3 border-gray-100 border-b p-4 transition-colors last:border-b-0 hover:bg-gray-50 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : ""}`}
 															onMouseEnter={() => setHighlightedIndex(idx)}
-															onClick={() => {
-																handleCourseSelection(course);
-															}}
-															onKeyDown={(e) => {
-																if (e.key === "Enter" || e.key === " ") {
-																	e.preventDefault();
-																	handleCourseSelection(course);
-																}
-															}}
 														>
 															<FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
 															<div className="min-w-0 flex-1">
 																<h3 className="mb-1 font-medium text-mcmaster-maroon">
-																	{course.major} {course.course_code}
+																	{course.course_code}
 																</h3>
 																<p className="mb-1 line-clamp-2 text-gray-600 text-sm">
 																	{course.name}
 																</p>
 																<div className="flex items-center gap-2 text-mcmaster-gray text-xs">
-																	<span>{course.semester}</span>
-																	<span>•</span>
-																	<span>Updated {course.lastUpdated}</span>
-																	<span>•</span>
-																	<span>{course.department}</span>
+																	<span>{course.major}</span>
 																</div>
 															</div>
-														</button>
+														</Link>
 													))}
 												</>
-											) : (
+											) : debouncedSearchValue.length >= 2 ? (
 												<div className="p-8 text-center">
 													<Search className="mx-auto mb-4 h-12 w-12 text-mcmaster-gray opacity-40" />
 													<p className="mb-2 font-medium text-mcmaster-maroon">
@@ -303,6 +261,12 @@ export default function Component() {
 													</p>
 													<p className="text-mcmaster-gray text-sm">
 														Try a different search term or course code
+													</p>
+												</div>
+											) : (
+												<div className="p-6 text-center">
+													<p className="text-mcmaster-gray text-sm">
+														Type at least 2 characters to start searching
 													</p>
 												</div>
 											)}
