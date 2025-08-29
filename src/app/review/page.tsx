@@ -5,10 +5,10 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-
 import {
 	type UploadedFileData,
 	useDeleteAllFiles,
@@ -32,6 +32,12 @@ export default function ReviewPage() {
 	const isLast = currentIndex >= totalFiles - 1;
 
 	const uploadToGithub = api.github.uploadFile.useMutation();
+
+	const fileSchema = z.object({
+		courseCode: z.string().min(1, "Course code is required"),
+		semester: z.string().min(1, "Semester is required"),
+		description: z.string(),
+	});
 
 	type FormMeta = {
 		submitAction: "next" | "prev" | "submit" | null;
@@ -70,9 +76,9 @@ export default function ReviewPage() {
 
 	const form = useForm({
 		defaultValues: {
-			courseCode: currentFile?.metadata.courseCode || "",
-			semester: currentFile?.metadata.semester || "",
-			description: currentFile?.metadata.description || "",
+			courseCode: currentFile?.metadata.courseCode ?? "",
+			semester: currentFile?.metadata.semester ?? "",
+			description: currentFile?.metadata.description ?? "",
 		},
 		onSubmit: async ({ value, meta }) => {
 			if (!currentFile?.metadata.id) return;
@@ -117,44 +123,24 @@ export default function ReviewPage() {
 		},
 		onSubmitMeta: defaultMeta,
 		validators: {
-			onChange: ({ value }) => {
-				const errors: string[] = [];
-
-				if (!value.courseCode || value.courseCode.trim() === "") {
-					errors.push("Course code is required");
-				}
-
-				if (!value.semester || value.semester.trim() === "") {
-					errors.push("Semester is required");
-				}
-
-				if (errors.length > 0) {
-					return errors.join(", ");
-				}
-
-				return undefined;
-			},
+			onChange: fileSchema,
 		},
 	});
 
 	const handleNext = async () => {
-		if (!form.state.canSubmit) return;
-
 		await form.handleSubmit({ submitAction: "next" });
-		if (!isLast) {
+		if (!isLast && form.state.canSubmit) {
 			setCurrentIndex(currentIndex + 1);
 		}
 	};
 
 	const handleSubmitAll = async () => {
-		if (!form.state.canSubmit) return;
-
 		await form.handleSubmit({ submitAction: "submit" });
 	};
 
 	const handlePrevious = async () => {
 		await form.handleSubmit({ submitAction: "prev" });
-		if (!isFirst) {
+		if (!isFirst && form.state.canSubmit) {
 			setCurrentIndex(currentIndex - 1);
 		}
 	};
@@ -330,26 +316,28 @@ export default function ReviewPage() {
 											</Button>
 										</div>
 										<div className="space-y-2">
-											<form.Field
-												name="courseCode"
-												validators={{
-													onChange: ({ value }) => {
-														if (!value || value.trim() === "") {
-															return "Course code is required";
-														}
-														return undefined;
-													},
-												}}
-											>
+											<form.Field name="courseCode">
 												{(field) => (
 													<div className="space-y-1">
-														<label
-															htmlFor={field.name}
-															className="font-medium text-sm"
-														>
-															Course Code{" "}
-															<span className="text-red-500">*</span>
-														</label>
+														<div className="flex items-center justify-between">
+															<label
+																htmlFor={field.name}
+																className="font-medium text-sm"
+															>
+																Course Code{" "}
+																<span className="text-red-500">*</span>
+															</label>
+															{!field.state.meta.isValid && (
+																<em
+																	role="alert"
+																	className="text-red-500 text-xs"
+																>
+																	{field.state.meta.errors
+																		.map((error) => error?.message)
+																		.join(", ")}
+																</em>
+															)}
+														</div>
 														<Input
 															id={field.name}
 															name={field.name}
@@ -363,34 +351,31 @@ export default function ReviewPage() {
 																	"border-red-500 focus:border-red-500",
 															)}
 														/>
-														{field.state.meta.errors.length > 0 && (
-															<p className="text-red-500 text-xs">
-																{field.state.meta.errors[0]}
-															</p>
-														)}
 													</div>
 												)}
 											</form.Field>
 
-											<form.Field
-												name="semester"
-												validators={{
-													onChange: ({ value }) => {
-														if (!value || value.trim() === "") {
-															return "Semester is required";
-														}
-														return undefined;
-													},
-												}}
-											>
+											<form.Field name="semester">
 												{(field) => (
 													<div className="space-y-1">
-														<label
-															htmlFor={field.name}
-															className="font-medium text-sm"
-														>
-															Semester <span className="text-red-500">*</span>
-														</label>
+														<div className="flex items-center justify-between">
+															<label
+																htmlFor={field.name}
+																className="font-medium text-sm"
+															>
+																Semester <span className="text-red-500">*</span>
+															</label>
+															{!field.state.meta.isValid && (
+																<em
+																	role="alert"
+																	className="text-red-500 text-xs"
+																>
+																	{field.state.meta.errors
+																		.map((error) => error?.message)
+																		.join(", ")}
+																</em>
+															)}
+														</div>
 														<Input
 															id={field.name}
 															name={field.name}
@@ -404,11 +389,6 @@ export default function ReviewPage() {
 																	"border-red-500 focus:border-red-500",
 															)}
 														/>
-														{field.state.meta.errors.length > 0 && (
-															<p className="text-red-500 text-xs">
-																{field.state.meta.errors[0]}
-															</p>
-														)}
 													</div>
 												)}
 											</form.Field>
@@ -462,30 +442,30 @@ export default function ReviewPage() {
 									</div>
 
 									{/* Navigation buttons */}
-									<div className="flex gap-2 border-t bg-gray-50/50 p-3">
-										<Button
-											onClick={handlePrevious}
-											disabled={isFirst}
-											className={clsx("flex-1", { hidden: totalFiles <= 1 })}
-										>
-											← Previous
-										</Button>
+									<div className="border-t bg-gray-50/50 p-3">
+										<div className="flex gap-2">
+											<Button
+												onClick={handlePrevious}
+												disabled={isFirst}
+												className={clsx("flex-1", { hidden: totalFiles <= 1 })}
+											>
+												← Previous
+											</Button>
 
-										<Button
-											onClick={handleNext}
-											disabled={!form.state.canSubmit}
-											className={clsx("flex-1", { hidden: isLast })}
-										>
-											Next →
-										</Button>
+											<Button
+												onClick={handleNext}
+												className={clsx("flex-1", { hidden: isLast })}
+											>
+												Next →
+											</Button>
 
-										<Button
-											onClick={handleSubmitAll}
-											disabled={!form.state.canSubmit}
-											className={clsx("flex-1", { hidden: !isLast })}
-										>
-											Submit
-										</Button>
+											<Button
+												onClick={handleSubmitAll}
+												className={clsx("flex-1", { hidden: !isLast })}
+											>
+												Submit
+											</Button>
+										</div>
 									</div>
 								</div>
 							</div>
