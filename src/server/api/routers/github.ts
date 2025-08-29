@@ -11,12 +11,16 @@ export const githubRouter = createTRPCRouter({
 				.pipe(
 					z.object({
 						file: z.instanceof(File),
-						path: z.string(),
+						major: z.string(),
+						code: z.string(),
+						semester: z.string(),
+						fileName: z.string(),
 					}),
 				),
 		)
 		.mutation(async ({ input, ctx }) => {
-			const { file, path } = input;
+			const { file, major, code, semester, fileName } = input;
+			const path = `${major}/${code}/${semester}/${fileName}`;
 
 			try {
 				const arrayBuffer = await file.arrayBuffer();
