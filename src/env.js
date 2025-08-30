@@ -7,7 +7,6 @@ export const env = createEnv({
 	 * isn't built with invalid env vars.
 	 */
 	server: {
-		DATABASE_URL: z.string().url(),
 		GITHUB_APP_ID: z.string(),
 		GITHUB_PRIVATE_KEY: z.string(),
 		GITHUB_APP_INSTALLATION_ID: z
@@ -33,7 +32,6 @@ export const env = createEnv({
 	 * middlewares) or client-side so we need to destruct manually.
 	 */
 	runtimeEnv: {
-		DATABASE_URL: process.env.DATABASE_URL,
 		NODE_ENV: process.env.NODE_ENV,
 		GITHUB_APP_ID: process.env.GITHUB_APP_ID,
 		GITHUB_APP_INSTALLATION_ID: process.env.GITHUB_APP_INSTALLATION_ID,

@@ -16,6 +16,7 @@ import {
 	useGetAllFiles,
 	useUpdateFileMetadata,
 } from "@/lib/opfs";
+import { parseCourseCode } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
 export default function ReviewPage() {
@@ -34,8 +35,18 @@ export default function ReviewPage() {
 	const uploadToGithub = api.github.uploadFile.useMutation();
 
 	const fileSchema = z.object({
-		courseCode: z.string().min(1, "Course code is required"),
-		semester: z.string().min(1, "Semester is required"),
+		courseCode: z
+			.string()
+			.min(1, "Course code is required")
+			.regex(/^[A-Z]+\s?[0-9]{1}[A-Z]{2}[0-9]{1}$/i, "Incorrect formatting"),
+		semester: z
+			.string()
+			.min(1, "Semester is required")
+			.regex(/^(fall|spring|summer|winter)\s?20\d{2}$/i, "Incorrect formatting")
+			.transform((val) => {
+				const cleaned = val.replace(/\s+/g, "").toUpperCase();
+				return cleaned.replace(/(\d)/, " $1");
+			}),
 		description: z.string(),
 	});
 
@@ -54,23 +65,31 @@ export default function ReviewPage() {
 		metadata: UploadedFileData,
 	) {
 		const fileName = file.name.replace(".pdf", "");
+		const result = parseCourseCode(metadata.courseCode ?? "");
+		if (result.isErr()) {
+			toast.error(result.error.message);
+			return;
+		}
+		const { major, code } = result.value;
+
 		const formData = new FormData();
 		formData.append("file", file);
-		formData.append(
-			"path",
-			`${metadata.courseCode}/${metadata.semester}/${fileName}.pdf`,
-		);
+		formData.append("major", major);
+		formData.append("code", code);
+		formData.append("semester", metadata.semester ?? "");
+		formData.append("fileName", `${fileName}.pdf`);
 		await uploadToGithub.mutateAsync(formData);
+
 		// upload the metadata as a json file
 		const metadataFormData = new FormData();
 		metadataFormData.append(
 			"file",
 			new Blob([JSON.stringify(metadata)], { type: "application/json" }),
 		);
-		metadataFormData.append(
-			"path",
-			`${metadata.courseCode}/${metadata.semester}/${fileName}.meta.json`,
-		);
+		metadataFormData.append("major", major);
+		metadataFormData.append("code", code);
+		metadataFormData.append("semester", metadata.semester ?? "");
+		metadataFormData.append("fileName", `${fileName}.meta.json`);
 		await uploadToGithub.mutateAsync(metadataFormData);
 	}
 
@@ -332,9 +351,7 @@ export default function ReviewPage() {
 																	role="alert"
 																	className="text-red-500 text-xs"
 																>
-																	{field.state.meta.errors
-																		.map((error) => error?.message)
-																		.join(", ")}
+																	{field.state.meta.errors[0]?.message}
 																</em>
 															)}
 														</div>
@@ -370,9 +387,7 @@ export default function ReviewPage() {
 																	role="alert"
 																	className="text-red-500 text-xs"
 																>
-																	{field.state.meta.errors
-																		.map((error) => error?.message)
-																		.join(", ")}
+																	{field.state.meta.errors[0]?.message}
 																</em>
 															)}
 														</div>
@@ -383,7 +398,7 @@ export default function ReviewPage() {
 															onChange={(e) =>
 																field.handleChange(e.target.value)
 															}
-															placeholder="e.g., Fall 2024"
+															placeholder="e.g., Fall 2025 or Fall2025"
 															className={clsx(
 																field.state.meta.errors.length > 0 &&
 																	"border-red-500 focus:border-red-500",

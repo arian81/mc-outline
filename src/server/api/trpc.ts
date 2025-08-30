@@ -12,7 +12,6 @@ import { App } from "octokit";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { env } from "@/env";
-import { db } from "@/server/db";
 
 /**
  * 1. CONTEXT
@@ -35,7 +34,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 		env.GITHUB_APP_INSTALLATION_ID,
 	);
 	return {
-		db,
 		github,
 		...opts,
 	};
