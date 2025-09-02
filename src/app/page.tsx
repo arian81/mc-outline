@@ -129,6 +129,7 @@ export default function App() {
 								name: file.name,
 								size: file.size,
 								type: file.type,
+								instructor: "",
 							},
 						});
 

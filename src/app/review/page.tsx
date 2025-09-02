@@ -48,6 +48,7 @@ export default function ReviewPage() {
 				return cleaned.replace(/(\d)/, " $1");
 			}),
 		description: z.string(),
+		instructor: z.string().min(1, "Instructor is required"),
 	});
 
 	type FormMeta = {
@@ -98,6 +99,7 @@ export default function ReviewPage() {
 			courseCode: currentFile?.metadata.courseCode ?? "",
 			semester: currentFile?.metadata.semester ?? "",
 			description: currentFile?.metadata.description ?? "",
+			instructor: currentFile?.metadata.instructor ?? "",
 		},
 		onSubmit: async ({ value, meta }) => {
 			if (!currentFile?.metadata.id) return;
@@ -398,6 +400,43 @@ export default function ReviewPage() {
 																field.handleChange(e.target.value)
 															}
 															placeholder="e.g., Fall 2025 or Fall2025"
+															className={clsx(
+																field.state.meta.errors.length > 0 &&
+																	"border-red-500 focus:border-red-500",
+															)}
+														/>
+													</div>
+												)}
+											</form.Field>
+
+											<form.Field name="instructor">
+												{(field) => (
+													<div className="space-y-1">
+														<div className="flex items-center justify-between">
+															<label
+																htmlFor={field.name}
+																className="font-medium text-sm"
+															>
+																Instructor{" "}
+																<span className="text-red-500">*</span>
+															</label>
+															{!field.state.meta.isValid && (
+																<em
+																	role="alert"
+																	className="text-red-500 text-xs"
+																>
+																	{field.state.meta.errors[0]?.message}
+																</em>
+															)}
+														</div>
+														<Input
+															id={field.name}
+															name={field.name}
+															value={field.state.value}
+															onChange={(e) =>
+																field.handleChange(e.target.value)
+															}
+															placeholder="Professor/Instructor name..."
 															className={clsx(
 																field.state.meta.errors.length > 0 &&
 																	"border-red-500 focus:border-red-500",
