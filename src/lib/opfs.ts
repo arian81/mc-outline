@@ -13,6 +13,7 @@ const UploadedFileDataSchema = z.object({
 	courseCode: z.string().optional(),
 	semester: z.string().optional(),
 	description: z.string().optional(),
+	instructor: z.string(),
 });
 
 type UploadedFileData = z.infer<typeof UploadedFileDataSchema>;
