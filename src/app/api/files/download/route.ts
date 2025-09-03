@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 				"Content-Type": contentType,
 				"Content-Disposition": `inline; filename="${response.data.name}"`,
 				"Content-Length": content.length.toString(),
-                // We can set a really long cache since files realistically shouldn't change overtime 
+				// We can set a really long cache since files realistically shouldn't change overtime
 				"Cache-Control": "public, max-age=31536000",
 			},
 		});
