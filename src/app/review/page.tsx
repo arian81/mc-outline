@@ -4,6 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Realistic from "react-canvas-confetti/dist/presets/realistic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
@@ -28,6 +29,7 @@ export default function ReviewPage() {
 	const { data: files, isLoading, isError, error } = useGetAllFiles();
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [isUploading, setIsUploading] = useState(false);
+	const [showConfetti, setShowConfetti] = useState(false);
 
 	const updateMetadata = useUpdateFileMetadata();
 	const deleteFile = useDeleteFile();
@@ -169,10 +171,15 @@ export default function ReviewPage() {
 						}),
 					];
 
-					await Promise.all(uploadPromises);
-					toast.success(`Files uploaded to Github`);
-					await deleteAllFiles.mutateAsync();
+									await Promise.all(uploadPromises);
+				toast.success(`Files uploaded to Github`);
+				await deleteAllFiles.mutateAsync();
+				
+				// Show confetti and redirect after 2 seconds
+				setShowConfetti(true);
+				setTimeout(() => {
 					router.push("/");
+				}, 2000);
 				} catch (error) {
 					toast.error(
 						`Failed to upload files: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -602,6 +609,8 @@ export default function ReviewPage() {
 					Unable to load current PDF
 				</div>
 			)}
+			
+			{showConfetti && <Realistic autorun={{ speed: 2, duration: 1000 }} />}
 		</div>
 	);
 }

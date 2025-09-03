@@ -89,6 +89,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.1.1
+      react-canvas-confetti:
+        specifier: ^2.0.7
+        version: 2.0.7(react@19.1.1)
       react-dom:
         specifier: ^19.0.0
         version: 19.1.1(react@19.1.1)
@@ -1369,6 +1372,9 @@ packages:
   '@types/aws-lambda@8.10.152':
     resolution: {integrity: sha512-soT/c2gYBnT5ygwiHPmd9a1bftj462NWVk2tKCc1PYHSIacB2UwbTS2zYG4jzag1mRDuzg/OjtxQjQ2NKRB6Rw==}
 
+  '@types/canvas-confetti@1.9.0':
+    resolution: {integrity: sha512-aBGj/dULrimR1XDZLtG9JwxX1b4HPRF6CX9Yfwh3NvstZEm1ZL7RBnel4keCPSqs1ANRu1u2Aoz9R+VmtjYuTg==}
+
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
@@ -1442,6 +1448,9 @@ packages:
 
   caniuse-lite@1.0.30001737:
     resolution: {integrity: sha512-BiloLiXtQNrY5UyF0+1nSJLXUENuhka2pzy2Fx5pGxqavdrxSCW4U6Pn/PoG3Efspi2frRbHpBV2XsrPE6EDlw==}
+
+  canvas-confetti@1.9.3:
+    resolution: {integrity: sha512-rFfTURMvmVEX1gyXFgn5QMn81bYk70qa0HLzcIOSVEyl57n6o9ItHeBtUSWdvKAPY0xlvBHno4/v3QPrT83q9g==}
 
   cheerio-select@2.1.0:
     resolution: {integrity: sha512-9v9kG0LvzrlcungtnJtpGNxY+fzECQKhK4EGJX2vByejiMX84MFNQw4UxPJl3bFbTMw+Dfs37XaIkCwTZfLh4g==}
@@ -1929,6 +1938,11 @@ packages:
 
   preact@10.27.1:
     resolution: {integrity: sha512-V79raXEWch/rbqoNc7nT9E4ep7lu+mI3+sBmfRD4i1M73R3WLYcCtdI0ibxGVf4eQL8ZIz2nFacqEC+rmnOORQ==}
+
+  react-canvas-confetti@2.0.7:
+    resolution: {integrity: sha512-DIj44O35TPAwJkUSIZqWdVsgAMHtVf8h7YNmnr3jF3bn5mG+d7Rh9gEcRmdJfYgRzh6K+MAGujwUoIqQyLnMJw==}
+    peerDependencies:
+      react: '*'
 
   react-dom@19.1.1:
     resolution: {integrity: sha512-Dlq/5LAZgF0Gaz6yiqZCf6VCcZs1ghAJyrsu84Q/GT0gV+mCxbfmKNoGRKBYMJ8IEdGPqu49YWXD02GCknEDkw==}
@@ -3194,6 +3208,8 @@ snapshots:
 
   '@types/aws-lambda@8.10.152': {}
 
+  '@types/canvas-confetti@1.9.0': {}
+
   '@types/estree@1.0.8': {}
 
   '@types/node@20.19.11':
@@ -3263,6 +3279,8 @@ snapshots:
     optional: true
 
   caniuse-lite@1.0.30001737: {}
+
+  canvas-confetti@1.9.3: {}
 
   cheerio-select@2.1.0:
     dependencies:
@@ -3693,6 +3711,12 @@ snapshots:
   postgres@3.4.7: {}
 
   preact@10.27.1: {}
+
+  react-canvas-confetti@2.0.7(react@19.1.1):
+    dependencies:
+      '@types/canvas-confetti': 1.9.0
+      canvas-confetti: 1.9.3
+      react: 19.1.1
 
   react-dom@19.1.1(react@19.1.1):
     dependencies:
