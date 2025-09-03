@@ -7,8 +7,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import {
+	Dropdown,
+	type DropdownOption,
+	dropdownOptionSchema,
+} from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
-
+import courseMappingData from "@/data/course_mapping.json";
 import {
 	type UploadedFileData,
 	useDeleteAllFiles,
@@ -23,6 +28,7 @@ export default function ReviewPage() {
 	const { data: files, isLoading, isError, error } = useGetAllFiles();
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [isUploading, setIsUploading] = useState(false);
+
 	const updateMetadata = useUpdateFileMetadata();
 	const deleteFile = useDeleteFile();
 	const deleteAllFiles = useDeleteAllFiles();
@@ -31,22 +37,35 @@ export default function ReviewPage() {
 	const totalFiles = files?.length ?? 0;
 	const isFirst = currentIndex === 0;
 	const isLast = currentIndex >= totalFiles - 1;
-
 	const uploadToGithub = api.github.uploadFile.useMutation();
 
+	const courseOptions: DropdownOption[] = Object.entries(courseMappingData).map(
+		([courseCode, courseName]) => ({
+			value: courseCode,
+			label: `${courseCode} - ${courseName}`,
+		}),
+	);
+	const seasonOptions: DropdownOption[] = [
+		{ value: "FALL", label: "Fall" },
+		{ value: "SPRING", label: "Spring" },
+		{ value: "SUMMER", label: "Summer" },
+		{ value: "WINTER", label: "Winter" },
+	];
+	const yearOptions: DropdownOption[] = Array.from({ length: 101 }, (_, i) => {
+		const year = 2000 + i;
+		return { value: year.toString(), label: year.toString() };
+	});
+
 	const fileSchema = z.object({
-		courseCode: z
-			.string()
-			.min(1, "Course code is required")
-			.regex(/^[A-Z]+\s?[0-9]{1}[A-Z]{2}[0-9]{1}$/i, "Incorrect formatting"),
-		semester: z
-			.string()
-			.min(1, "Semester is required")
-			.regex(/^(fall|spring|summer|winter)\s?20\d{2}$/i, "Incorrect formatting")
-			.transform((val) => {
-				const cleaned = val.replace(/\s+/g, "").toUpperCase();
-				return cleaned.replace(/(\d)/, " $1");
-			}),
+		courseCode: dropdownOptionSchema
+			.nullable()
+			.refine((option) => option !== null, "Course code is required"),
+		season: dropdownOptionSchema
+			.nullable()
+			.refine((option) => option !== null, "Season is required"),
+		year: dropdownOptionSchema
+			.nullable()
+			.refine((option) => option !== null, "Year is required"),
 		description: z.string(),
 		instructor: z.string().min(1, "Instructor is required"),
 	});
@@ -94,19 +113,56 @@ export default function ReviewPage() {
 		await uploadToGithub.mutateAsync(metadataFormData);
 	}
 
+	// TODO: This function is sus figure out a better way.
+	const parseSemester = (semester: string) => {
+		if (!semester) return { season: null, year: null };
+
+		const parts = semester.toUpperCase().split(" ");
+		if (parts.length !== 2) return { season: null, year: null };
+
+		const [seasonPart, yearPart] = parts;
+		const season =
+			seasonOptions.find((option) => option.value === seasonPart) ?? null;
+		const year =
+			yearOptions.find((option) => option.value === yearPart) ?? null;
+
+		return { season, year };
+	};
+
+	const currentSemester = parseSemester(currentFile?.metadata.semester ?? "");
+
 	const form = useForm({
 		defaultValues: {
-			courseCode: currentFile?.metadata.courseCode ?? "",
-			semester: currentFile?.metadata.semester ?? "",
+			courseCode: currentFile?.metadata.courseCode
+				? (courseOptions.find(
+						(option) => option.value === currentFile.metadata.courseCode,
+					) ?? null)
+				: null,
+			season: currentSemester.season,
+			year: currentSemester.year,
 			description: currentFile?.metadata.description ?? "",
 			instructor: currentFile?.metadata.instructor ?? "",
 		},
 		onSubmit: async ({ value, meta }) => {
 			if (!currentFile?.metadata.id) return;
+			console.log("DEBUG", value);
+
+			// Extract the course code value from the dropdown option and combine season/year
+			const semester =
+				value.season && value.year
+					? `${value.season.value} ${value.year.value}`
+					: "";
+
+			const updatedMetadata = {
+				...currentFile.metadata,
+				...value,
+				courseCode: value.courseCode?.value ?? "",
+				semester,
+			};
 
 			await updateMetadata.mutateAsync({
 				fileId: currentFile.metadata.id,
-				updatedMetadata: { ...currentFile.metadata, ...value },
+				updatedMetadata,
 			});
 
 			if (meta.submitAction === "submit") {
@@ -124,6 +180,11 @@ export default function ReviewPage() {
 						uploadFileWithMetadata(currentFile.file, {
 							...currentFile.metadata,
 							...value,
+							courseCode: value.courseCode?.value ?? "",
+							semester:
+								value.season && value.year
+									? `${value.season.value} ${value.year.value}`
+									: "",
 						}),
 					];
 
@@ -356,58 +417,97 @@ export default function ReviewPage() {
 																</em>
 															)}
 														</div>
-														<Input
-															id={field.name}
+														<Dropdown
 															name={field.name}
 															value={field.state.value}
-															onChange={(e) =>
-																field.handleChange(e.target.value)
-															}
-															placeholder="e.g., CS101"
+															onChange={(option) => field.handleChange(option)}
+															options={courseOptions}
+															placeholder="Select a course code..."
 															className={clsx(
 																field.state.meta.errors.length > 0 &&
-																	"border-red-500 focus:border-red-500",
+																	"border-red-500",
 															)}
 														/>
 													</div>
 												)}
 											</form.Field>
 
-											<form.Field name="semester">
-												{(field) => (
-													<div className="space-y-1">
-														<div className="flex items-center justify-between">
-															<label
-																htmlFor={field.name}
-																className="font-medium text-sm"
-															>
-																Semester <span className="text-red-500">*</span>
-															</label>
-															{!field.state.meta.isValid && (
-																<em
-																	role="alert"
-																	className="text-red-500 text-xs"
-																>
-																	{field.state.meta.errors[0]?.message}
-																</em>
-															)}
-														</div>
-														<Input
-															id={field.name}
-															name={field.name}
-															value={field.state.value}
-															onChange={(e) =>
-																field.handleChange(e.target.value)
-															}
-															placeholder="e.g., Fall 2025 or Fall2025"
-															className={clsx(
-																field.state.meta.errors.length > 0 &&
-																	"border-red-500 focus:border-red-500",
-															)}
-														/>
-													</div>
-												)}
-											</form.Field>
+											<div className="space-y-2">
+												<form.Field name="season">
+													{(seasonField) => (
+														<form.Field name="year">
+															{(yearField) => {
+																// Determine which fields have errors and create combined error message
+																const seasonInvalid =
+																	!seasonField.state.meta.isValid;
+																const yearInvalid =
+																	!yearField.state.meta.isValid;
+																let errorMessage = "";
+
+																if (seasonInvalid && yearInvalid) {
+																	errorMessage = "Season, year required";
+																} else if (seasonInvalid) {
+																	errorMessage = "Season is required";
+																} else if (yearInvalid) {
+																	errorMessage = "Year required";
+																}
+
+																return (
+																	<>
+																		<div className="flex items-center justify-between">
+																			<span className="font-medium text-sm">
+																				Semester{" "}
+																				<span className="text-red-500">*</span>
+																			</span>
+																			{errorMessage && (
+																				<em
+																					role="alert"
+																					className="text-red-500 text-xs"
+																				>
+																					{errorMessage}
+																				</em>
+																			)}
+																		</div>
+																		<div className="grid grid-cols-2 gap-2">
+																			<div className="space-y-1">
+																				<Dropdown
+																					name={seasonField.name}
+																					value={seasonField.state.value}
+																					onChange={(option) =>
+																						seasonField.handleChange(option)
+																					}
+																					options={seasonOptions}
+																					placeholder="Season"
+																					className={clsx(
+																						seasonField.state.meta.errors
+																							.length > 0 && "border-red-500",
+																					)}
+																				/>
+																			</div>
+
+																			<div className="space-y-1">
+																				<Dropdown
+																					name={yearField.name}
+																					value={yearField.state.value}
+																					onChange={(option) =>
+																						yearField.handleChange(option)
+																					}
+																					options={yearOptions}
+																					placeholder="Year"
+																					className={clsx(
+																						yearField.state.meta.errors.length >
+																							0 && "border-red-500",
+																					)}
+																				/>
+																			</div>
+																		</div>
+																	</>
+																);
+															}}
+														</form.Field>
+													)}
+												</form.Field>
+											</div>
 
 											<form.Field name="instructor">
 												{(field) => (
@@ -439,7 +539,7 @@ export default function ReviewPage() {
 															placeholder="Professor/Instructor name..."
 															className={clsx(
 																field.state.meta.errors.length > 0 &&
-																	"border-red-500 focus:border-red-500",
+																	"border-red-500",
 															)}
 														/>
 													</div>
@@ -469,7 +569,7 @@ export default function ReviewPage() {
 											</form.Field>
 										</div>
 
-										<div className="space-y-1 border-t pt-2 text-muted-foreground text-sm">
+										<div className="space-y-1 pt-2 text-muted-foreground text-sm">
 											<div>
 												Size:{" "}
 												<span
