@@ -10,8 +10,11 @@ export const metadata: Metadata = {
 	description: "Find and share course outlines",
 	icons: [{ rel: "icon", url: "/favicon.ico" }],
 	openGraph: {
+		type: "website",
+		url: "https://mcoutline.com",
 		title: "McOutline",
 		description: "Find and share course outlines",
+		siteName: "McOutline",
 		images: [{ url: "/og-image.png" }],
 	},
 };
