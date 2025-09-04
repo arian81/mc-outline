@@ -5,7 +5,7 @@
 
 @theme {
 	--font-sans:
-		var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+		var(--font-poppins-sans), ui-sans-serif, system-ui, sans-serif,
 		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -48,7 +48,7 @@
 	--color-mcmaster-maroon: #7a003c;
 	--color-mcmaster-gray: #495965;
 	--color-mcmaster-yellow: #fdbf57;
-	--font-sans: Outfit, sans-serif;
+	--font-sans: Poppins, sans-serif;
 	--font-mono:
 		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
 		"Courier New", monospace;
@@ -113,7 +113,7 @@
 	--sidebar-border: oklch(0.9401 0 0);
 	--sidebar-ring: oklch(0.7731 0 0);
 	--destructive-foreground: oklch(1 0 0);
-	--font-sans: Outfit, sans-serif;
+	--font-sans: Poppins, sans-serif;
 	--font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 	--font-mono:
 		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
@@ -175,7 +175,7 @@
 	--sidebar-ring: oklch(0.7731 0 0);
 	--destructive-foreground: oklch(1 0 0);
 	--radius: 0.5rem;
-	--font-sans: Outfit, sans-serif;
+	--font-sans: Poppins, sans-serif;
 	--font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 	--font-mono:
 		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
