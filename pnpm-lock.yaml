@@ -89,6 +89,12 @@ importers:
       postgres:
         specifier: ^3.4.4
         version: 3.4.7
+      posthog-js:
+        specifier: ^1.261.6
+        version: 1.261.6
+      posthog-node:
+        specifier: ^5.8.1
+        version: 5.8.1
       react:
         specifier: ^19.0.0
         version: 19.1.1
@@ -923,6 +929,9 @@ packages:
       react: '>=18'
       react-dom: '>=18'
 
+  '@posthog/core@1.0.2':
+    resolution: {integrity: sha512-hWk3rUtJl2crQK0WNmwg13n82hnTwB99BT99/XI5gZSvIlYZ1TPmMZE8H2dhJJ98J/rm9vYJ/UXNzw3RV5HTpQ==}
+
   '@preact/signals-core@1.12.1':
     resolution: {integrity: sha512-BwbTXpj+9QutoZLQvbttRg5x3l5468qaV2kufh+51yha1c53ep5dY4kTuZR35+3pAZxpfQerGJiQqg34ZNZ6uA==}
 
@@ -1498,6 +1507,9 @@ packages:
     resolution: {integrity: sha512-yCEafptTtb4bk7GLEQoM8KVJpxAfdBJYaXyzQEgQQQgYrZiDp8SJmGKlYza6CYjEDNstAdNdKA3UuoULlEbS6w==}
     engines: {node: '>=12.13'}
 
+  core-js@3.45.1:
+    resolution: {integrity: sha512-L4NPsJlCfZsPeXukyzHFlg/i7IIVwHSItR0wg0FLNqYClJ4MQYTYLbC7EkjKYRLZF2iof2MUgN0EGy7MdQFChg==}
+
   css-select@5.2.2:
     resolution: {integrity: sha512-TizTzUddG/xYLA3NXodFM0fSbNizXjOKhqiQQwvhlspadZokn1KDy0NZFS0wuEubIYAV5/c1/lAr0TaaFXEXzw==}
 
@@ -1688,6 +1700,9 @@ packages:
 
   fast-content-type-parse@3.0.0:
     resolution: {integrity: sha512-ZvLdcY8P+N8mGQJahJV5G4U88CSvT1rP8ApL6uETe88MBXrBHAkZlSEySdUlyztF7ccb+Znos3TFqaepHxdhBg==}
+
+  fflate@0.4.8:
+    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
 
   fsevents@2.3.2:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
@@ -1940,6 +1955,21 @@ packages:
     resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
     engines: {node: '>=12'}
 
+  posthog-js@1.261.6:
+    resolution: {integrity: sha512-tson+4i+T2YkGYlj/oGjFwKRpBFqhM7Xr9ZmXGEtNFkZc6ZQHYCzObeeHT6BbKc5d/dAfMCPtvPCKssARaK6eQ==}
+    peerDependencies:
+      '@rrweb/types': 2.0.0-alpha.17
+      rrweb-snapshot: 2.0.0-alpha.17
+    peerDependenciesMeta:
+      '@rrweb/types':
+        optional: true
+      rrweb-snapshot:
+        optional: true
+
+  posthog-node@5.8.1:
+    resolution: {integrity: sha512-YJYlYnlpItVjHqM9IhvZx8TzK8gnx2nU+0uhiog4RN47NnV0Z0K1AdC4ul+O8VuvS/jHqKCQvL8iAONRA37+0A==}
+    engines: {node: '>=20'}
+
   preact@10.27.1:
     resolution: {integrity: sha512-V79raXEWch/rbqoNc7nT9E4ep7lu+mI3+sBmfRD4i1M73R3WLYcCtdI0ibxGVf4eQL8ZIz2nFacqEC+rmnOORQ==}
 
@@ -2158,6 +2188,9 @@ packages:
     resolution: {integrity: sha512-Rb46I4cGGVBmjamjphe8L/UnvJD+uPPtTkNvX5mZgqdbavhI4EbgIWJiIHXJ8bc/i9EQGPRh4DwEURJ552Do0A==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  web-vitals@4.2.4:
+    resolution: {integrity: sha512-r4DIlprAGwJ7YM11VZp4R884m0Vmgr6EAKe3P+kO0PPj3Unqyvv59rczf6UiGcb9Z8QxZVcqKNwv/g0WNdWwsw==}
 
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
@@ -2826,6 +2859,8 @@ snapshots:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
 
+  '@posthog/core@1.0.2': {}
+
   '@preact/signals-core@1.12.1': {}
 
   '@preact/signals@1.3.2(preact@10.27.1)':
@@ -3340,6 +3375,8 @@ snapshots:
     dependencies:
       is-what: 4.1.16
 
+  core-js@3.45.1: {}
+
   css-select@5.2.2:
     dependencies:
       boolbase: 1.0.0
@@ -3486,6 +3523,8 @@ snapshots:
       '@types/estree': 1.0.8
 
   fast-content-type-parse@3.0.0: {}
+
+  fflate@0.4.8: {}
 
   fsevents@2.3.2:
     optional: true
@@ -3709,6 +3748,18 @@ snapshots:
 
   postgres@3.4.7: {}
 
+  posthog-js@1.261.6:
+    dependencies:
+      '@posthog/core': 1.0.2
+      core-js: 3.45.1
+      fflate: 0.4.8
+      preact: 10.27.1
+      web-vitals: 4.2.4
+
+  posthog-node@5.8.1:
+    dependencies:
+      '@posthog/core': 1.0.2
+
   preact@10.27.1: {}
 
   react-dom@19.1.1(react@19.1.1):
@@ -3924,6 +3975,8 @@ snapshots:
   use-sync-external-store@1.5.0(react@19.1.1):
     dependencies:
       react: 19.1.1
+
+  web-vitals@4.2.4: {}
 
   webpack-virtual-modules@0.6.2:
     optional: true

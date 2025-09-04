@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { App } from "octokit";
 import { env } from "@/env";
+import PostHogClient from "@/lib/posthog";
 
 export async function GET(request: NextRequest) {
 	const searchParams = request.nextUrl.searchParams;
@@ -84,6 +85,20 @@ export async function GET(request: NextRequest) {
 		};
 
 		const contentType = getContentType(infoResponse.data.name);
+		
+		const posthog = PostHogClient();
+		posthog.capture({
+			distinctId: request.headers.get('x-forwarded-for') || 'anonymous',
+			event: 'file_downloaded',
+			properties: {
+				file_name: infoResponse.data.name,
+				file_size: content.length,
+				file_path: path,
+				content_type: contentType,
+				timestamp: new Date().toISOString(),
+			},
+		});
+		await posthog.shutdown();
 
 		return new NextResponse(new Uint8Array(content), {
 			status: 200,
@@ -97,6 +112,18 @@ export async function GET(request: NextRequest) {
 		});
 	} catch (error) {
 		console.error(`Failed to download file at path "${path}":`, error);
+		const posthog = PostHogClient();
+		posthog.capture({
+			distinctId: request.headers.get('x-forwarded-for') || 'anonymous',
+			event: 'file_download_failed',
+			properties: {
+				file_path: path,
+				error_message: error instanceof Error ? error.message : "Unknown error",
+				timestamp: new Date().toISOString(),
+			},
+		});
+		await posthog.shutdown();
+
 		return NextResponse.json(
 			{
 				error: `Failed to download file: ${error instanceof Error ? error.message : "Unknown error"}`,

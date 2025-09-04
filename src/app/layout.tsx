@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import { ReactScanProvider } from "@/components/ReactScanProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCReactProvider } from "@/trpc/react";
+import { PostHogProvider } from "@/components/PostHogProvider";
 
 export const metadata: Metadata = {
 	title: "McOutline",
@@ -34,10 +35,12 @@ export default function RootLayout({
 				<meta name="apple-mobile-web-app-title" content="McOutline" />
 			</head>
 			<body>
-				<ReactScanProvider>
-					<TRPCReactProvider>{children}</TRPCReactProvider>
-					<Toaster />
-				</ReactScanProvider>
+				<PostHogProvider>
+					<ReactScanProvider>
+						<TRPCReactProvider>{children}</TRPCReactProvider>
+						<Toaster />
+					</ReactScanProvider>
+				</PostHogProvider>
 			</body>
 		</html>
 	);
