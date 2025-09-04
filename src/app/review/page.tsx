@@ -165,7 +165,7 @@ export default function ReviewPage() {
 							courseCode: value.courseCode?.value ?? "",
 							semester:
 								value.season && value.year
-									? `${value.season.value} ${value.year.value}`
+									? `${value.season.value}${value.year.value}`
 									: "",
 						}),
 					];
