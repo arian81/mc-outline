@@ -28,6 +28,7 @@ export default function App() {
 	const router = useRouter();
 	const { mutateAsync: uploadFile } = useUploadFile();
 	const debouncedSearchValue = useDebounce(searchValue, 300);
+	const trpcUtils = api.useUtils();
 
 	const { data: searchResults = [], isLoading } = api.courses.search.useQuery(
 		{ query: debouncedSearchValue, limit: 5 },
@@ -236,8 +237,13 @@ export default function App() {
 															key={course.id}
 															href={course.course_code.split(" ").join("/")}
 															prefetch={true}
-															className={`flex w-full cursor-pointer items-start gap-3 border-gray-100 border-b p-4 transition-colors last:border-b-0 hover:bg-gray-50 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : ""}`}
-															onMouseEnter={() => setHighlightedIndex(idx)}
+															className={`flex w-full cursor-pointer items-start gap-3 border-gray-100 border-b p-4 transition-colors last:border-b-0 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : "hover:bg-mcmaster-yellow/20"}`}
+															onMouseEnter={() => {
+																setHighlightedIndex(idx);
+																trpcUtils.github.listFiles.prefetch({
+																	path: course.course_code.split(" ").join("/"),
+																});
+															}}
 														>
 															<FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
 															<div className="min-w-0 flex-1">
