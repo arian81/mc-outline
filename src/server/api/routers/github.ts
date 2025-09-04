@@ -30,7 +30,7 @@ export const githubRouter = createTRPCRouter({
 						owner,
 						repo,
 						path: path,
-						message: `Upload file: ${file.name}`,
+						message: `Upload file: ${fileName}`,
 						content: base64Content,
 					},
 				);

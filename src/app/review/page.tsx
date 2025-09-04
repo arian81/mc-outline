@@ -10,7 +10,6 @@ import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
 import courseMappingData from "@/data/course_mapping.json";
 import {
-	useDeleteAllFiles,
 	useDeleteFile,
 	useGetAllFiles,
 	useUpdateFileMetadata,
@@ -31,7 +30,6 @@ export default function ReviewPage() {
 
 	const updateMetadata = useUpdateFileMetadata();
 	const deleteFile = useDeleteFile();
-	const deleteAllFiles = useDeleteAllFiles();
 	const router = useRouter();
 	const currentFile = files?.[currentIndex] ?? null;
 	const totalFiles = files?.length ?? 0;
@@ -148,34 +146,70 @@ export default function ReviewPage() {
 
 			if (meta.submitAction === "submit") {
 				setIsUploading(true);
+				let uploadedCount = 0;
+				let failedCount = 0;
+				const failedFiles: string[] = [];
+
 				try {
 					const otherFiles =
 						files?.filter(
 							(file) => file.metadata.id !== currentFile.metadata.id,
 						) || [];
-					const uploadPromises = [
-						...otherFiles.map((file) =>
-							uploadFileWithMetadata(file.file, file.metadata),
-						),
-						//TODO: This approach is not good. I can't think of a better solution. FIX LATER.
-						uploadFileWithMetadata(currentFile.file, {
-							...currentFile.metadata,
-							...value,
-							courseCode: value.courseCode?.value ?? "",
-							semester:
-								value.season && value.year
-									? `${value.season.value}${value.year.value}`
-									: "",
-						}),
-					];
 
-					await Promise.all(uploadPromises);
-					toast.success(`Files uploaded to Github`);
-					await deleteAllFiles.mutateAsync();
-					router.push("/");
+					// Upload current file first (with updated metadata)
+					const currentFileMetadata = {
+						...currentFile.metadata,
+						...value,
+						courseCode: value.courseCode?.value ?? "",
+						semester:
+							value.season && value.year
+								? `${value.season.value} ${value.year.value}`
+								: "",
+					};
+
+					try {
+						await uploadFileWithMetadata(currentFile.file, currentFileMetadata);
+						await deleteFile.mutateAsync(currentFile.metadata.id);
+						uploadedCount++;
+					} catch (error) {
+						failedCount++;
+						failedFiles.push(currentFile.metadata.name);
+						console.error(
+							`Failed to upload ${currentFile.metadata.name}:`,
+							error,
+						);
+					}
+
+					// Upload other files one by one
+					for (const file of otherFiles) {
+						try {
+							await uploadFileWithMetadata(file.file, file.metadata);
+							await deleteFile.mutateAsync(file.metadata.id);
+							uploadedCount++;
+						} catch (error) {
+							failedCount++;
+							failedFiles.push(file.metadata.name);
+							console.error(`Failed to upload ${file.metadata.name}:`, error);
+						}
+					}
+
+					// Show results
+					if (failedCount === 0) {
+						toast.success(`All ${uploadedCount} files uploaded successfully!`);
+						router.push("/");
+					} else if (uploadedCount > 0) {
+						toast.success(`${uploadedCount} files uploaded successfully`);
+						toast.error(
+							`${failedCount} files failed to upload: ${failedFiles.join(", ")}. Please try again.`,
+						);
+					} else {
+						toast.error(
+							`All uploads failed: ${failedFiles.join(", ")}. Please try again.`,
+						);
+					}
 				} catch (error) {
 					toast.error(
-						`Failed to upload files: ${error instanceof Error ? error.message : "Unknown error"}`,
+						`Upload process failed: ${error instanceof Error ? error.message : "Unknown error"}`,
 					);
 				} finally {
 					setIsUploading(false);
