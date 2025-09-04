@@ -1,9 +1,9 @@
 import { coursesRouter } from "@/server/api/routers/courses";
 import { githubRouter } from "@/server/api/routers/github";
 import {
-	createCallerFactory,
-	createTRPCRouter,
-	publicProcedure,
+  createCallerFactory,
+  createTRPCRouter,
+  publicProcedure,
 } from "@/server/api/trpc";
 
 /**
@@ -12,9 +12,9 @@ import {
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-	health: publicProcedure.query(() => "OK"),
-	github: githubRouter,
-	courses: coursesRouter,
+  health: publicProcedure.query(() => "OK"),
+  github: githubRouter,
+  courses: coursesRouter,
 });
 
 // export type definition of API
