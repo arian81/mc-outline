@@ -57,7 +57,7 @@ export function Dropdown({
 					onChange={(event) => setQuery(event.target.value)}
 					placeholder={placeholder}
 					className={cn(
-						"w-full overflow-ellipsis rounded-md border border-gray-400 bg-white p-2 pr-10 outline-none transition-[color,box-shadow] focus-visible:border-mcmaster-yellow focus-visible:shadow-[0_0_0_3px_rgba(253,191,87,0.3)]",
+						"flex h-9 w-full overflow-ellipsis rounded-md border border-gray-400 bg-white px-3 py-1 pr-10 text-base text-black outline-none transition-[color,box-shadow] focus-visible:border-mcmaster-yellow focus-visible:shadow-[0_0_0_3px_rgba(253,191,87,0.3)] md:text-sm",
 						className,
 					)}
 				/>
