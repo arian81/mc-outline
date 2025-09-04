@@ -30,28 +30,49 @@ export async function GET(request: NextRequest) {
 			env.GITHUB_APP_INSTALLATION_ID,
 		);
 
-		const response = await github.rest.repos.getContent({
+		const infoResponse = await github.rest.repos.getContent({
 			owner,
 			repo,
 			path,
 		});
 
-		// This two checks shouldn't be needed, but because of the github response
-		// we have to do them to make typescript happy.
-		if (Array.isArray(response.data)) {
+		if (Array.isArray(infoResponse.data)) {
 			return NextResponse.json(
 				{ error: `Expected file at path "${path}", but found a directory` },
 				{ status: 400 },
 			);
 		}
-		if (response.data.type !== "file" || !response.data.content) {
+		if (infoResponse.data.type !== "file") {
 			return NextResponse.json(
-				{ error: `File at path "${path}" has no content` },
+				{ error: `Path "${path}" is not a file` },
 				{ status: 404 },
 			);
 		}
 
-		const content = Buffer.from(response.data.content, "base64");
+		// For large files (>1MB), use the Git Data API to get the blob directly
+		// For smaller files, we can still use the content from the info response
+		let content: Buffer;
+
+		if (infoResponse.data.size > 1024 * 1024 || !infoResponse.data.content) {
+
+
+			const blobResponse = await github.rest.git.getBlob({
+				owner,
+				repo,
+				file_sha: infoResponse.data.sha,
+			});
+
+			if (blobResponse.data.encoding === "base64") {
+				content = Buffer.from(blobResponse.data.content, "base64");
+			} else {
+				content = Buffer.from(
+					blobResponse.data.content,
+					blobResponse.data.encoding as BufferEncoding,
+				);
+			}
+		} else {
+			content = Buffer.from(infoResponse.data.content, "base64");
+		}
 		const getContentType = (filename: string): string => {
 			const ext = filename.toLowerCase().split(".").pop();
 			switch (ext) {
@@ -64,13 +85,13 @@ export async function GET(request: NextRequest) {
 			}
 		};
 
-		const contentType = getContentType(response.data.name);
+		const contentType = getContentType(infoResponse.data.name);
 
-		return new NextResponse(content, {
+		return new NextResponse(new Uint8Array(content), {
 			status: 200,
 			headers: {
 				"Content-Type": contentType,
-				"Content-Disposition": `inline; filename="${response.data.name}"`,
+				"Content-Disposition": `inline; filename="${infoResponse.data.name}"`,
 				"Content-Length": content.length.toString(),
 				// We can set a really long cache since files realistically shouldn't change overtime
 				"Cache-Control": "public, max-age=31536000",

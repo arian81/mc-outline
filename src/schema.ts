@@ -107,6 +107,16 @@ export const githubListFilesSchema = z.object({
 	path: z.string(),
 });
 
+export const UploadedFileDataWithDownloadSchema = UploadedFileDataSchema.extend(
+	{
+		download_url: z.string(),
+	},
+);
+
+export type UploadedFileDataWithDownload = z.infer<
+	typeof UploadedFileDataWithDownloadSchema
+>;
+
 export const coursesSearchSchema = z.object({
 	query: z.string().min(1),
 	limit: z.number().min(1).max(20).optional().default(5),

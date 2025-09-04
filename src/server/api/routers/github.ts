@@ -1,5 +1,10 @@
 import { env } from "@/env";
-import { githubListFilesSchema, githubUploadSchema } from "@/schema";
+import {
+	githubListFilesSchema,
+	githubUploadSchema,
+	type UploadedFileDataWithDownload,
+	UploadedFileDataWithDownloadSchema,
+} from "@/schema";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 export const githubRouter = createTRPCRouter({
@@ -69,14 +74,7 @@ export const githubRouter = createTRPCRouter({
 				);
 
 				// Collect all files from all semester directories
-				const allFiles: Array<{
-					name: string;
-					path: string;
-					type: string;
-					size?: number;
-					download_url: string;
-					semester: string;
-				}> = [];
+				const allFiles: UploadedFileDataWithDownload[] = [];
 
 				// Loop through each semester directory and get its files
 				for (const semesterDir of semesterDirectories) {
@@ -88,19 +86,76 @@ export const githubRouter = createTRPCRouter({
 						});
 
 						if (Array.isArray(filesResponse.data)) {
-							// Add files from this semester, including semester info
-							const semesterFiles = filesResponse.data
-								.filter((item) => item.type === "file") // Only include files, not subdirectories
-								.map((item) => ({
-									name: item.name,
-									path: item.path,
-									type: item.type,
-									size: item.size,
-									download_url: `/api/files/download?path=${encodeURIComponent(item.path)}`,
-									semester: semesterDir.name,
-								}));
+							// Get all files in this semester directory
+							const files = filesResponse.data.filter(
+								(item) => item.type === "file",
+							);
 
-							allFiles.push(...semesterFiles);
+							// Group files by their base name (without extension)
+							const fileGroups = new Map<
+								string,
+								{ pdf?: (typeof files)[0]; meta?: (typeof files)[0] }
+							>();
+
+							for (const file of files) {
+								const baseName = file.name.replace(/\.(pdf|meta\.json)$/i, "");
+								if (!fileGroups.has(baseName)) {
+									fileGroups.set(baseName, {});
+								}
+
+								if (file.name.endsWith(".pdf")) {
+									const group = fileGroups.get(baseName);
+									if (group) {
+										group.pdf = file;
+									}
+								} else if (
+									file.name.endsWith(".json") &&
+									file.name.includes("meta")
+								) {
+									const group = fileGroups.get(baseName);
+									if (group) {
+										group.meta = file;
+									}
+								}
+							}
+
+							// Process each PDF that has a meta.json file
+							for (const [, { pdf, meta }] of fileGroups) {
+								if (pdf && meta) {
+									try {
+										// Read the meta.json file
+										const metaResponse = await ctx.github.rest.repos.getContent(
+											{
+												owner,
+												repo,
+												path: meta.path,
+											},
+										);
+
+										if ("content" in metaResponse.data) {
+											const metaContent = Buffer.from(
+												metaResponse.data.content,
+												"base64",
+											).toString("utf-8");
+											const metaData = JSON.parse(metaContent);
+
+											// Validate and parse the metadata using our schema
+											const parsedMeta =
+												UploadedFileDataWithDownloadSchema.parse({
+													...metaData,
+													download_url: `/api/files/download?path=${encodeURIComponent(pdf.path)}`,
+												});
+
+											allFiles.push(parsedMeta);
+										}
+									} catch (metaError) {
+										console.warn(
+											`Failed to read metadata for file "${pdf.name}": ${metaError instanceof Error ? metaError.message : "Unknown error"}`,
+										);
+										// Skip this file if metadata can't be read or parsed
+									}
+								}
+							}
 						}
 					} catch (semesterError) {
 						console.warn(

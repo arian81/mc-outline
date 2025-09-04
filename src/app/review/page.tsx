@@ -127,7 +127,6 @@ export default function ReviewPage() {
 		},
 		onSubmit: async ({ value, meta }) => {
 			if (!currentFile?.metadata.id) return;
-			console.log("DEBUG", value);
 
 			// Extract the course code value from the dropdown option and combine season/year
 			const semester =

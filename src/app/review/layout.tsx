@@ -8,7 +8,7 @@ export default function ReviewLayout({
 }) {
 	return (
 		<div className="flex min-h-screen flex-col">
-			<Header />
+			<Header title="Review Uploaded Files" />
 			<main className="flex-1">{children}</main>
 			<Footer />
 		</div>
