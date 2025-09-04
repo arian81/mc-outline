@@ -28,7 +28,7 @@ export default async function CoursePage({
 	const result = await api.github.listFiles({
 		path: `${major}/${course_code}`,
 	});
-	
+
 	if (result.isOk()) {
 		files = result.value.files;
 	}
@@ -176,10 +176,12 @@ export default async function CoursePage({
 					<Card className="py-12 text-center">
 						<CardContent>
 							<FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-							<CardTitle className="mb-2">Course Outline Not Available Yet</CardTitle>
+							<CardTitle className="mb-2">
+								Course Outline Not Available Yet
+							</CardTitle>
 							<CardDescription className="text-md">
-								No one has uploaded the course outline for this course yet. 
-								If you have it please send it over. 🙂
+								No one has uploaded the course outline for this course yet. If
+								you have it please send it over. 🙂
 							</CardDescription>
 						</CardContent>
 					</Card>

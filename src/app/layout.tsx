@@ -21,6 +21,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
 	return (
 		<html lang="en" className={`${geist.variable}`}>
+			<head>
+				<meta name="apple-mobile-web-app-title" content="McOutline" />
+			</head>
 			<body>
 				<ReactScanProvider>
 					<TRPCReactProvider>{children}</TRPCReactProvider>
