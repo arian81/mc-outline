@@ -54,8 +54,6 @@ export async function GET(request: NextRequest) {
 		let content: Buffer;
 
 		if (infoResponse.data.size > 1024 * 1024 || !infoResponse.data.content) {
-
-
 			const blobResponse = await github.rest.git.getBlob({
 				owner,
 				repo,
