@@ -25,13 +25,12 @@ export default async function CoursePage({
 		notFound();
 	}
 	let files: UploadedFileDataWithDownload[] = [];
-	try {
-		const { files: githubFiles } = await api.github.listFiles({
-			path: `${major}/${course_code}`,
-		});
-		files = githubFiles;
-	} catch (_) {
-		notFound();
+	const result = await api.github.listFiles({
+		path: `${major}/${course_code}`,
+	});
+	
+	if (result.isOk()) {
+		files = result.value.files;
 	}
 
 	const pdfFiles = files.filter((file) =>
@@ -173,16 +172,18 @@ export default async function CoursePage({
 					))}
 				</div>
 			) : (
-				<Card className="py-12 text-center">
-					<CardContent>
-						<FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-						<CardTitle className="mb-2">No PDF files found</CardTitle>
-						<CardDescription>
-							There are no course materials available for {major.toUpperCase()}{" "}
-							{course_code.toUpperCase()} at this time.
-						</CardDescription>
-					</CardContent>
-				</Card>
+				<div className="space-y-6">
+					<Card className="py-12 text-center">
+						<CardContent>
+							<FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+							<CardTitle className="mb-2">Course Outline Not Available Yet</CardTitle>
+							<CardDescription className="text-md">
+								No one has uploaded the course outline for this course yet. 
+								If you have it please send it over. 🙂
+							</CardDescription>
+						</CardContent>
+					</Card>
+				</div>
 			)}
 		</div>
 	);
