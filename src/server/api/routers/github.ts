@@ -8,6 +8,7 @@ import {
 	UploadedFileDataWithDownloadSchema,
 } from "@/schema";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import PostHogClient from "@/lib/posthog";
 
 export const githubRouter = createTRPCRouter({
 	uploadFile: publicProcedure
@@ -34,6 +35,23 @@ export const githubRouter = createTRPCRouter({
 						content: base64Content,
 					},
 				);
+				
+				// Track file upload event
+				const posthog = PostHogClient();
+				posthog.capture({
+					distinctId: ctx.headers.get('x-forwarded-for') || 'anonymous',
+					event: 'file_uploaded',
+					properties: {
+						file_name: fileName,
+						file_size: buffer.length,
+						file_path: path,
+						major: major,
+						course_code: code,
+						semester: semester,
+						timestamp: new Date().toISOString(),
+					},
+				});
+				await posthog.shutdown();
 
 				return {
 					file: file.name,

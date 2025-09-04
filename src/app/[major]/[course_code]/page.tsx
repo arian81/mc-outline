@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import courseMapping from "@/data/course_mapping.json";
 import type { UploadedFileDataWithDownload } from "@/schema";
 import { api } from "@/trpc/server";
+import PostHogClient from "@/lib/posthog";
 
 export default async function CoursePage({
 	params,
@@ -36,6 +37,33 @@ export default async function CoursePage({
 	const pdfFiles = files.filter((file) =>
 		file.name.toLowerCase().endsWith(".pdf"),
 	);
+
+	const posthog = PostHogClient();
+	posthog.capture({
+		distinctId: "anonymous",
+		event: "course_page_viewed",
+		properties: {
+			course_code: fullCourseCode,
+			major: major.toUpperCase(),
+			course_number: course_code.toUpperCase(),
+			files_available: files.length,
+			pdf_files_available: pdfFiles.length,
+			has_content: pdfFiles.length > 0,
+		},
+	});
+	if (pdfFiles.length === 0) {
+		posthog.capture({
+			distinctId: "anonymous",
+			event: "course_empty_state_viewed",
+			properties: {
+				course_code: fullCourseCode,
+				major: major.toUpperCase(),
+				course_number: course_code.toUpperCase(),
+			},
+		});
+	}
+
+	posthog.shutdown();
 
 	// Group files by semester for better organization
 	const filesBySemester = pdfFiles.reduce(
