@@ -1,23 +1,10 @@
-import { z } from "zod";
 import { env } from "@/env";
+import { githubListFilesSchema, githubUploadSchema } from "@/schema";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 
 export const githubRouter = createTRPCRouter({
 	uploadFile: publicProcedure
-		.input(
-			z
-				.instanceof(FormData)
-				.transform((fd) => Object.fromEntries(fd.entries()))
-				.pipe(
-					z.object({
-						file: z.instanceof(File),
-						major: z.string(),
-						code: z.string(),
-						semester: z.string(),
-						fileName: z.string(),
-					}),
-				),
-		)
+		.input(githubUploadSchema)
 		.mutation(async ({ input, ctx }) => {
 			const { file, major, code, semester, fileName } = input;
 			const path = `${major}/${code}/${semester}/${fileName}`;
@@ -53,11 +40,7 @@ export const githubRouter = createTRPCRouter({
 			}
 		}),
 	listFiles: publicProcedure
-		.input(
-			z.object({
-				path: z.string(),
-			}),
-		)
+		.input(githubListFilesSchema)
 		.query(async ({ input, ctx }) => {
 			const { path } = input;
 

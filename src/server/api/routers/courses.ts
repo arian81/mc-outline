@@ -1,14 +1,7 @@
 import Fuse from "fuse.js";
-import { z } from "zod";
 import courseMapping from "@/data/course_mapping.json";
+import { type CourseData, coursesSearchSchema } from "@/schema";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-
-type CourseData = {
-	id: string;
-	course_code: string;
-	name: string;
-	major: string;
-};
 
 const coursesData: CourseData[] = Object.entries(courseMapping).map(
 	([courseCode, courseName], index) => {
@@ -37,21 +30,14 @@ const fuseOptions = {
 const fuse = new Fuse(coursesData, fuseOptions);
 
 export const coursesRouter = createTRPCRouter({
-	search: publicProcedure
-		.input(
-			z.object({
-				query: z.string().min(1),
-				limit: z.number().min(1).max(20).optional().default(5),
-			}),
-		)
-		.query(({ input }) => {
-			const { query, limit } = input;
+	search: publicProcedure.input(coursesSearchSchema).query(({ input }) => {
+		const { query, limit } = input;
 
-			const results = fuse.search(query);
+		const results = fuse.search(query);
 
-			return results.slice(0, limit).map((result) => ({
-				...result.item,
-				score: result.score,
-			}));
-		}),
+		return results.slice(0, limit).map((result) => ({
+			...result.item,
+			score: result.score,
+		}));
+	}),
 });
