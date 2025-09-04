@@ -17,13 +17,11 @@ import { DOMParser } from "@xmldom/xmldom";
 	for (let page = 1; ; page++) {
 		const url = new URL(BASE_URL);
 		// Set all parameters except course_add normally
-		Object.entries({ ...PARAMS, page_num: String(page) }).forEach(
-			([k, v]) => {
-				if (k !== "course_add") {
-					url.searchParams.set(k, v);
-				}
-			},
-		);
+		Object.entries({ ...PARAMS, page_num: String(page) }).forEach(([k, v]) => {
+			if (k !== "course_add") {
+				url.searchParams.set(k, v);
+			}
+		});
 		// Manually append course_add to preserve the literal + character
 		url.search += "&course_add=+";
 
@@ -34,12 +32,10 @@ import { DOMParser } from "@xmldom/xmldom";
 		const parser = new DOMParser();
 		const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
-		
-
 		// Check if we've hit an empty page
 		const addSuggestElement = xmlDoc.getElementsByTagName("add_suggest")[0];
 		const resultCount = addSuggestElement?.textContent?.trim();
-		
+
 		if (resultCount === "0") {
 			console.log(`No more results on page ${page}, stopping.`);
 			break;
@@ -52,7 +48,7 @@ import { DOMParser } from "@xmldom/xmldom";
 		for (let i = 0; i < rsElements.length; i++) {
 			const rsElement = rsElements[i];
 			if (!rsElement) continue;
-			
+
 			const courseCode = rsElement.textContent?.trim();
 			const infoAttr = rsElement.getAttribute("info");
 
@@ -63,12 +59,13 @@ import { DOMParser } from "@xmldom/xmldom";
 					.replace(/&lt;/g, "<")
 					.replace(/&gt;/g, ">")
 					.replace(/&amp;/g, "&");
-				
+
 				// Extract description after the <br/> tag
 				const brIndex = decodedInfo.indexOf("<br/>");
-				const description = brIndex !== -1 
-					? decodedInfo.substring(brIndex + 5).trim()
-					: decodedInfo.trim();
+				const description =
+					brIndex !== -1
+						? decodedInfo.substring(brIndex + 5).trim()
+						: decodedInfo.trim();
 
 				if (description) {
 					courseMapping[courseCode] = description;
@@ -81,7 +78,7 @@ import { DOMParser } from "@xmldom/xmldom";
 		totalCourses += coursesOnPage.length;
 
 		// Add a small delay to be respectful to the server
-		await new Promise(resolve => setTimeout(resolve, 100));
+		await new Promise((resolve) => setTimeout(resolve, 100));
 	}
 
 	await fs.writeFile(
