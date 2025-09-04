@@ -1,41 +1,45 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
-	"files": { "ignoreUnknown": false },
-	"formatter": { "enabled": true },
-	"assist": {
-		"actions": {
-			"source": {
-				"organizeImports": "on"
-			}
-		}
-	},
-	"linter": {
-		"enabled": true,
-		"rules": {
-			"nursery": {
-				"useSortedClasses": {
-					"level": "warn",
-					"fix": "safe",
-					"options": {
-						"functions": ["clsx", "cva", "cn"]
-					}
-				}
-			},
-			"complexity": {
-				"noImportantStyles": "off"
-			},
-			"a11y": {
-				"useSemanticElements": "off"
-			},
-			"suspicious": {
-				"noUnknownAtRules": "off"
-			},
-			"recommended": true
-		}
-	}
+  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": { "ignoreUnknown": false },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "nursery": {
+        "useSortedClasses": {
+          "level": "warn",
+          "fix": "safe",
+          "options": {
+            "functions": ["clsx", "cva", "cn"]
+          }
+        }
+      },
+      "complexity": {
+        "noImportantStyles": "off"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
+      },
+      "suspicious": {
+        "noUnknownAtRules": "off"
+      },
+      "recommended": true
+    }
+  }
 }
