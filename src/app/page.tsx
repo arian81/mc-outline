@@ -45,6 +45,8 @@ export default function App() {
 		}
 	}, [searchResults]);
 
+
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
