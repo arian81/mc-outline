@@ -292,7 +292,7 @@ export default function App() {
 								<div className="text-center">
 									<FileUploadTrigger asChild>
 										<Button className="cursor-pointer rounded-lg bg-mcmaster-maroon px-8 py-3 font-medium text-white hover:shadow-lg">
-											Give us your outline files!
+											Send over your outline files!
 										</Button>
 									</FileUploadTrigger>
 
