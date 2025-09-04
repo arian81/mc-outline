@@ -1,19 +1,11 @@
 import { z } from "zod";
 
-// ============================================================================
-// Dropdown Schema and Types
-// ============================================================================
-
 export const dropdownOptionSchema = z.object({
 	value: z.string(),
 	label: z.string(),
 });
 
 export type DropdownOption = z.infer<typeof dropdownOptionSchema>;
-
-// ============================================================================
-// File Upload and OPFS Schemas and Types
-// ============================================================================
 
 export const UploadedFileDataSchema = z.object({
 	id: z.string(),
@@ -73,20 +65,12 @@ export type StoreAction =
 
 export type Direction = "ltr" | "rtl";
 
-// ============================================================================
-// Course Data Types
-// ============================================================================
-
 export type CourseData = {
 	id: string;
 	course_code: string;
 	name: string;
 	major: string;
 };
-
-// ============================================================================
-// Form Schemas and Types
-// ============================================================================
 
 export const fileSchema = z.object({
 	courseCode: dropdownOptionSchema
@@ -106,18 +90,6 @@ export type FormMeta = {
 	submitAction: "next" | "prev" | "submit" | null;
 };
 
-// ============================================================================
-// tRPC Router Types
-// ============================================================================
-
-// These need to be defined in trpc/react.tsx to avoid circular imports
-// export type RouterInputs = inferRouterInputs<AppRouter>;
-// export type RouterOutputs = inferRouterOutputs<AppRouter>;
-
-// ============================================================================
-// GitHub Upload Schema
-// ============================================================================
-
 export const githubUploadSchema = z
 	.instanceof(FormData)
 	.transform((fd) => Object.fromEntries(fd.entries()))
@@ -134,10 +106,6 @@ export const githubUploadSchema = z
 export const githubListFilesSchema = z.object({
 	path: z.string(),
 });
-
-// ============================================================================
-// Courses Search Schema
-// ============================================================================
 
 export const coursesSearchSchema = z.object({
 	query: z.string().min(1),
