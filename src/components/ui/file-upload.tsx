@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import type { Direction, FileState, StoreAction, StoreState } from "@/schema";
 
 const ROOT_NAME = "FileUpload";
 const DROPZONE_NAME = "FileUploadDropzone";
@@ -35,38 +36,12 @@ function useLazyRef<T>(fn: () => T) {
 	return ref as React.RefObject<T>;
 }
 
-type Direction = "ltr" | "rtl";
-
 const DirectionContext = React.createContext<Direction | undefined>(undefined);
 
 function useDirection(dirProp?: Direction): Direction {
 	const contextDir = React.useContext(DirectionContext);
 	return dirProp ?? contextDir ?? "ltr";
 }
-
-interface FileState {
-	file: File;
-	progress: number;
-	error?: string;
-	status: "idle" | "uploading" | "error" | "success";
-}
-
-interface StoreState {
-	files: Map<File, FileState>;
-	dragOver: boolean;
-	invalid: boolean;
-}
-
-type StoreAction =
-	| { type: "ADD_FILES"; files: File[] }
-	| { type: "SET_FILES"; files: File[] }
-	| { type: "SET_PROGRESS"; file: File; progress: number }
-	| { type: "SET_SUCCESS"; file: File }
-	| { type: "SET_ERROR"; file: File; error: string }
-	| { type: "REMOVE_FILE"; file: File }
-	| { type: "SET_DRAG_OVER"; dragOver: boolean }
-	| { type: "SET_INVALID"; invalid: boolean }
-	| { type: "CLEAR" };
 
 function createStore(
 	listeners: Set<() => void>,

@@ -7,15 +7,8 @@ import {
 } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import z from "zod";
 import { cn } from "@/lib/utils";
-
-export const dropdownOptionSchema = z.object({
-	value: z.string(),
-	label: z.string(),
-});
-
-export type DropdownOption = z.infer<typeof dropdownOptionSchema>;
+import type { DropdownOption } from "@/schema";
 
 interface DropdownProps {
 	name: string;

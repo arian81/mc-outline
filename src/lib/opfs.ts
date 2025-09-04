@@ -2,39 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { err, ok, type Result } from "neverthrow";
-import { z } from "zod";
-
-const UploadedFileDataSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	size: z.number(),
-	type: z.string(),
-	uploadedAt: z.string(),
-	courseCode: z.string().optional(),
-	semester: z.string().optional(),
-	description: z.string().optional(),
-	instructor: z.string(),
-});
-
-type UploadedFileData = z.infer<typeof UploadedFileDataSchema>;
-
-type FileWithMetadata = {
-	file: File;
-	metadata: UploadedFileData;
-};
-
-type FileStorageError = {
-	code:
-		| "OPFS_NOT_SUPPORTED"
-		| "FILE_NOT_FOUND"
-		| "SAVE_FAILED"
-		| "DELETE_FAILED"
-		| "UPDATE_FAILED"
-		| "LOAD_FAILED"
-		| "VALIDATION_FAILED";
-	message: string;
-	cause?: unknown;
-};
+import {
+	type FileStorageError,
+	type FileWithMetadata,
+	type UploadedFileData,
+	UploadedFileDataSchema,
+} from "@/schema";
 
 class OPFS {
 	private root: FileSystemDirectoryHandle | null = null;
@@ -440,4 +413,4 @@ export const useGetAllFiles = () => {
 	});
 };
 
-export { type UploadedFileData, OPFS, opfsInstance };
+export { OPFS, opfsInstance };
