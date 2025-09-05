@@ -69,10 +69,8 @@ export default function CoursePage() {
       try {
         const successfulUploads: File[] = [];
 
-        // Process each file
         for (const file of files) {
           try {
-            // Validate file type
             if (
               !file.type.includes("pdf") &&
               !file.name.toLowerCase().endsWith(".pdf")
@@ -80,8 +78,6 @@ export default function CoursePage() {
               onError(file, new Error("Only PDF files are allowed"));
               continue;
             }
-
-            // Use the TanStack Query mutation
             await uploadFile({
               file,
               metadata: {
@@ -91,7 +87,6 @@ export default function CoursePage() {
                 instructor: "",
               },
             });
-
             successfulUploads.push(file);
             onSuccess(file);
           } catch (error) {
@@ -103,8 +98,6 @@ export default function CoursePage() {
             );
           }
         }
-
-        // If any files were successfully processed, navigate to review page immediately
         if (successfulUploads.length > 0) {
           router.push("/review");
         }
@@ -119,18 +112,35 @@ export default function CoursePage() {
     console.log(`File "${file.name}" rejected: ${message}`);
   }, []);
 
-  // Group files by semester for better organization
-  const filesBySemester = pdfFiles?.reduce(
-    (acc, file) => {
-      const semester = file.semester || "Unknown";
-      if (!acc[semester]) {
-        acc[semester] = [];
-      }
-      acc[semester].push(file);
-      return acc;
-    },
-    {} as Record<string, typeof pdfFiles>,
-  );
+
+  const sortedFiles = pdfFiles?.sort((a, b) => {
+    const semesterA = a.semester || "Unknown";
+    const semesterB = b.semester || "Unknown";
+
+    const parseSemester = (semester: string) => {
+      if (semester === "Unknown") return { year: 0, season: 0 };
+      const parts = semester.split(" ");
+      const year = parseInt(parts[1] || "0", 10);
+      const season = parts[0]?.toLowerCase();
+
+      const seasonMap: Record<string, number> = {
+        winter: 1,
+        spring: 2,
+        summer: 3,
+        fall: 4,
+      };
+      return { year, season: seasonMap[season || ""] || 0 };
+    };
+    
+    const semesterDataA = parseSemester(semesterA);
+    const semesterDataB = parseSemester(semesterB);
+    
+    // Sort by year first (descending), then by season (descending)
+    if (semesterDataA.year !== semesterDataB.year) {
+      return semesterDataB.year - semesterDataA.year;
+    }
+    return semesterDataB.season - semesterDataA.season;
+  });
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -256,18 +266,15 @@ export default function CoursePage() {
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8">
       <div className="space-y-4 md:space-y-8">
-        {Object.entries(filesBySemester ?? {}).map(
-          ([semester, semesterFiles]) => (
-            <div key={semester} className="space-y-4 md:space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-                {semesterFiles.map((file) => (
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+          {sortedFiles?.map((file) => (
                   <Card key={file.id} className="flex flex-col">
                     <CardHeader className="pb-3 md:pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-blue-600 md:h-5 md:w-5" />
+                          <FileText className="h-4 w-4 text-mcmaster-maroon md:h-5 md:w-5" />
                           <CardTitle className="text-sm leading-tight md:text-base">
-                            {file.name}
+                            {`${file.courseCode} | ${file.semester}`}
                           </CardTitle>
                         </div>
                       </div>
@@ -356,12 +363,9 @@ export default function CoursePage() {
                         </Button>
                       </div>
                     </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ),
-        )}
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
