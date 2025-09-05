@@ -4,14 +4,20 @@ interface HeaderProps {
 
 export function Header({ title }: HeaderProps) {
   return (
-    <header className="w-full px-6 py-4">
-      <div className="grid grid-cols-3 items-center">
-        <div className="flex items-center gap-3">
-          <a href="/" className="h-10 w-10">
+    <header className="relative w-full px-3 py-3 md:px-6 md:py-4">
+      <div className="flex w-full items-center justify-between">
+        {/* Left positioned div - Logo/Brand */}
+        <div className="flex flex-shrink-0 items-center gap-2 md:gap-3">
+          <a
+            href="/"
+            className="flex h-7 w-7 items-center justify-center md:h-10 md:w-10"
+          >
             <svg
               viewBox="0 0 256 256"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              width="100%"
+              height="100%"
             >
               <title>McOutline</title>
               <rect width="256" height="256" rx="20" fill="#FDBF57" />
@@ -29,8 +35,10 @@ export function Header({ title }: HeaderProps) {
               />
             </svg>
           </a>
-          <div>
-            <h1 className="font-bold text-mcmaster-maroon text-xl">
+          <div
+            className={`flex-col justify-center ${title ? "hidden md:flex" : "flex"}`}
+          >
+            <h1 className="font-bold text-mcmaster-maroon text-sm md:text-xl">
               McOutline
             </h1>
             <p className="text-mcmaster-gray text-sm">
@@ -39,17 +47,21 @@ export function Header({ title }: HeaderProps) {
           </div>
         </div>
 
-        <div className="flex justify-center">
+        {/* Center positioned div - Title */}
+        <div className="-translate-x-1/2 absolute left-1/2 flex transform items-center px-2">
           {title && (
-            <p className="font-semibold text-lg text-mcmaster-maroon">
+            <p className="max-w-[200px] truncate text-center font-semibold text-mcmaster-maroon text-sm md:max-w-none md:whitespace-nowrap md:text-sm lg:text-lg">
               {title}
             </p>
           )}
         </div>
 
-        <div className="flex justify-end">
-          <p className="text-mcmaster-gray text-sm">
-            made by <br></br>
+        {/* Right positioned div - Credits */}
+        <div className="flex flex-shrink-0 items-center">
+          <p className="text-right text-mcmaster-gray text-xs md:text-sm">
+            <span className="hidden md:inline">made by</span>
+            <span className="md:hidden">by</span>
+            <br />
             <a
               className="text-mcmaster-maroon"
               href="https://arian.gg"

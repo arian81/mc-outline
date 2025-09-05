@@ -1,20 +1,21 @@
 export function Footer() {
   return (
-    <footer className="h-full w-full border-mcmaster-gray/30 border-t px-4 py-4">
-      <div className="mx-auto flex max-w-4xl items-center justify-center gap-2 text-center">
-        <p className="text-mcmaster-gray text-sm">
+    <footer className="h-full w-full border-mcmaster-gray/30 border-t px-3 py-3 md:px-4 md:py-4">
+      <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-1 text-center md:flex-row md:gap-2">
+        <p className="text-mcmaster-gray text-xs md:text-sm">
           Obviously not affiliated with Mac
         </p>
-        <span>•</span>
+        <span className="hidden md:inline">•</span>
         <a
           href="https://github.com/arian81/mc-outline"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-mcmaster-gray text-sm hover:underline"
+          className="flex items-center gap-1 text-mcmaster-gray text-xs hover:underline md:text-sm"
         >
           <svg
-            width="14"
-            height="14"
+            width="12"
+            height="12"
+            className="md:h-[14px] md:w-[14px]"
             viewBox="0 0 98 96"
             xmlns="http://www.w3.org/2000/svg"
             aria-label="GitHub"
@@ -29,8 +30,8 @@ export function Footer() {
           </svg>
           Checkout the repo
         </a>
-        <span>•</span>
-        <span className="text-mcmaster-gray text-sm">
+        <span className="hidden md:inline">•</span>
+        <span className="text-mcmaster-gray text-xs md:text-sm">
           Copyright © {new Date().getFullYear()}
         </span>
       </div>
