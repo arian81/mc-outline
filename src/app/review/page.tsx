@@ -296,7 +296,7 @@ export default function ReviewPage() {
           <div className="mx-auto w-full max-w-7xl px-1">
             <div className="flex h-[calc(100vh-12rem)] w-full items-center justify-center rounded-lg border bg-white shadow-xl">
               <div className="text-center">
-                <div className="mb-12 flex justify-center">
+                <div className="mb-20 flex justify-center">
                   <div className="relative inline-flex items-center justify-center">
                     <div className="absolute h-[180px] w-[180px] animate-spin rounded-full border-4 border-mcmaster-maroon border-t-transparent"></div>
                     <svg
@@ -319,12 +319,11 @@ export default function ReviewPage() {
                   </div>
                 </div>
 
-                <h2 className="mb-2 font-semibold text-2xl text-gray-800">
+                <h2 className="font-semibold text-2xl text-gray-800">
                   Uploading Your Files
                 </h2>
-                <p className="mb-4 text-gray-600">
-                  Please wait while we upload {totalFiles} file
-                  {totalFiles !== 1 ? "s" : ""} to GitHub...
+                <p className="text-gray-600 text-sm md:text-lg">
+                  Please wait while files are uploaded to GitHub...
                 </p>
               </div>
             </div>
@@ -340,10 +339,10 @@ export default function ReviewPage() {
         <div className="flex items-center justify-center">
           <div className="mx-auto w-full max-w-7xl px-1">
             <div className="relative">
-              <div className="-bottom-6 -right-6 absolute h-[calc(100vh-12rem)] w-full rounded-lg border bg-white shadow-lg"></div>
-              <div className="-bottom-3 -right-3 absolute h-[calc(100vh-12rem)] w-full rounded-lg border bg-white shadow-md"></div>
+              <div className="-bottom-6 -right-6 absolute hidden h-[calc(100vh-12rem)] w-full rounded-lg border bg-white shadow-lg lg:block"></div>
+              <div className="-bottom-3 -right-3 absolute hidden h-[calc(100vh-12rem)] w-full rounded-lg border bg-white shadow-md lg:block"></div>
 
-              <div className="relative flex h-[calc(100vh-12rem)] w-full flex-col gap-3 overflow-hidden rounded-lg border bg-white shadow-xl lg:flex-row">
+              <div className="relative flex min-h-[calc(100vh-12rem)] w-full flex-col gap-3 rounded-lg border bg-white shadow-xl lg:flex-row">
                 <div className="flex flex-1 flex-col p-3">
                   <div className="mb-2 flex-shrink-0">
                     <h2 className="font-semibold text-xl">
@@ -366,7 +365,7 @@ export default function ReviewPage() {
                 </div>
 
                 <div className="flex w-full flex-col border-t bg-gray-50/50 lg:w-80 lg:border-t-0 lg:border-l">
-                  <div className="flex-1 overflow-y-auto p-3">
+                  <div className="flex-1 p-3">
                     <div className="mb-2 flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold text-lg">Edit Metadata</h3>

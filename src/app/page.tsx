@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useUploadFile } from "@/lib/opfs";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
 export default function App() {
@@ -177,7 +178,11 @@ export default function App() {
         className="w-full"
       >
         <FileUploadDropzone
-          className={`h-screen ${isDragOver ? "border-4 border-mcmaster-maroon border-dashed bg-mcmaster-yellow/10" : ""}`}
+          className={cn(
+            "h-screen",
+            isDragOver &&
+              "border-4 border-mcmaster-maroon border-dashed bg-mcmaster-yellow/10",
+          )}
           onDragEnter={() => setIsDragOver(true)}
           onDragLeave={() => setIsDragOver(false)}
           onDrop={() => setIsDragOver(false)}
@@ -187,23 +192,33 @@ export default function App() {
             e.stopPropagation();
           }}
         >
-          <div className="flex h-full items-center justify-center overflow-clip p-4 pt-20">
+          <div className="flex h-full items-center justify-center p-4 md:pt-16">
             <div className="w-full max-w-2xl">
-              <div className={`${searchValue.length > 0 ? "mb-6" : ""}`}>
+              <div className={cn(searchValue.length > 0 && "mb-6")}>
                 <div
-                  className={`mb-8 text-center ${searchValue.length > 0 ? "-translate-y-8 pointer-events-none transform opacity-0" : "translate-y-0 transform opacity-100"}`}
+                  className={cn(
+                    "mb-10 transform text-center",
+                    searchValue.length > 0
+                      ? "-translate-y-8 pointer-events-none opacity-0"
+                      : "translate-y-0 opacity-100",
+                  )}
                 >
-                  <h2 className="mb-6 font-bold text-5xl text-mcmaster-maroon">
+                  <h2 className="font-bold text-2xl text-mcmaster-maroon md:text-4xl lg:text-5xl">
                     Find Course Outlines
                   </h2>
-                  <p className="text-mcmaster-gray text-xl">
+                  <p className="text-mcmaster-gray text-sm md:text-lg lg:text-xl">
                     Search by course code, name, or major
                   </p>
                 </div>
 
                 <div
                   ref={searchContainerRef}
-                  className={`relative z-50 mx-auto mb-4 max-w-xl ${searchValue.length > 0 ? "-translate-y-32 transform" : "translate-y-0 transform"}`}
+                  className={cn(
+                    "relative z-50 mx-auto mb-4 max-w-xl transform",
+                    searchValue.length > 0
+                      ? "-translate-y-32"
+                      : "translate-y-0",
+                  )}
                 >
                   <Search className="-translate-y-1/2 absolute top-1/2 left-4 h-5 w-5 transform" />
                   <Input
@@ -212,13 +227,18 @@ export default function App() {
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                     onKeyDown={handleSearchKeyDown}
-                    className={`rounded-xl border-2 border-mcmaster-maroon py-6 pr-4 pl-12 text-lg focus-visible:border-mcmaster-yellow focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-mcmaster-yellow/50 ${searchValue.length > 0 ? "border-opacity-100 shadow-2xl" : "border-opacity-50 shadow-lg"}`}
+                    className={cn(
+                      "rounded-xl border-2 border-mcmaster-maroon py-5 pr-4 pl-12 text-base focus-visible:border-mcmaster-yellow focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-mcmaster-yellow/50 md:text-lg lg:py-6",
+                      searchValue.length > 0
+                        ? "border-opacity-100 shadow-2xl"
+                        : "border-opacity-50 shadow-lg",
+                    )}
                   />
 
                   {searchValue && (
                     <div className="absolute top-full right-0 left-0 z-[100] mt-2 max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
                       {isLoading ? (
-                        <div className="p-8 text-center">
+                        <div className="p-4 text-center md:p-8">
                           <Search className="mx-auto mb-4 h-6 w-6 animate-spin text-mcmaster-gray" />
                           <p className="text-mcmaster-gray text-sm">
                             Searching courses...
@@ -226,8 +246,8 @@ export default function App() {
                         </div>
                       ) : searchResults.length > 0 ? (
                         <>
-                          <div className="border-gray-100 border-b p-4">
-                            <p className="font-medium text-mcmaster-gray text-sm">
+                          <div className="border-gray-100 border-b p-3 md:p-4">
+                            <p className="font-medium text-mcmaster-gray text-xs md:text-sm">
                               Found {searchResults.length} course
                               {searchResults.length !== 1 ? "s" : ""} for you
                             </p>
@@ -237,7 +257,12 @@ export default function App() {
                               key={course.id}
                               href={course.course_code.split(" ").join("/")}
                               prefetch={true}
-                              className={`flex w-full cursor-pointer items-start gap-3 border-gray-100 border-b p-4 transition-colors last:border-b-0 ${highlightedIndex === idx ? "bg-mcmaster-yellow/30" : "hover:bg-mcmaster-yellow/20"}`}
+                              className={cn(
+                                "flex w-full cursor-pointer items-start gap-2 border-gray-100 border-b p-3 transition-colors last:border-b-0 md:gap-3 md:p-4",
+                                highlightedIndex === idx
+                                  ? "bg-mcmaster-yellow/30"
+                                  : "hover:bg-mcmaster-yellow/20",
+                              )}
                               onMouseEnter={() => {
                                 setHighlightedIndex(idx);
                                 trpcUtils.github.listFiles.prefetch({
@@ -247,10 +272,10 @@ export default function App() {
                             >
                               <FileText className="mt-0.5 h-5 w-5 text-mcmaster-maroon" />
                               <div className="min-w-0 flex-1">
-                                <h3 className="mb-1 font-medium text-mcmaster-maroon">
+                                <h3 className="mb-1 font-medium text-mcmaster-maroon text-sm md:text-base">
                                   {course.course_code}
                                 </h3>
-                                <p className="mb-1 line-clamp-2 text-gray-600 text-sm">
+                                <p className="mb-1 line-clamp-2 text-gray-600 text-xs md:text-sm">
                                   {course.name}
                                 </p>
                                 <div className="flex items-center gap-2 text-mcmaster-gray text-xs">
@@ -261,18 +286,18 @@ export default function App() {
                           ))}
                         </>
                       ) : debouncedSearchValue.length >= 2 ? (
-                        <div className="p-8 text-center">
-                          <Search className="mx-auto mb-4 h-12 w-12 text-mcmaster-gray opacity-40" />
-                          <p className="mb-2 font-medium text-mcmaster-maroon">
+                        <div className="p-6 text-center md:p-8">
+                          <Search className="mx-auto mb-4 h-8 w-8 text-mcmaster-gray opacity-40 md:h-12 md:w-12" />
+                          <p className="mb-2 font-medium text-mcmaster-maroon text-sm md:text-base">
                             No courses found
                           </p>
-                          <p className="text-mcmaster-gray text-sm">
+                          <p className="text-mcmaster-gray text-xs md:text-sm">
                             Try a different search term or course code
                           </p>
                         </div>
                       ) : (
-                        <div className="p-6 text-center">
-                          <p className="text-mcmaster-gray text-sm">
+                        <div className="p-4 text-center md:p-6">
+                          <p className="text-mcmaster-gray text-xs md:text-sm">
                             Type at least 2 characters to start searching
                           </p>
                         </div>
@@ -283,9 +308,9 @@ export default function App() {
               </div>
 
               {searchValue.length === 0 && (
-                <div className="my-10 flex items-center gap-4">
+                <div className="my-6 flex items-center gap-4 md:my-10">
                   <Separator className="flex-1" />
-                  <span className="px-4 font-medium text-mcmaster-gray text-sm">
+                  <span className="px-2 font-medium text-mcmaster-gray text-sm md:px-4">
                     or
                   </span>
                   <Separator className="flex-1" />
@@ -293,16 +318,21 @@ export default function App() {
               )}
 
               <div
-                className={`${searchValue.length > 0 ? "pointer-events-none translate-y-8 transform opacity-0" : "translate-y-0 transform opacity-100"}`}
+                className={cn(
+                  "transform",
+                  searchValue.length > 0
+                    ? "pointer-events-none translate-y-8 opacity-0"
+                    : "translate-y-0 opacity-100",
+                )}
               >
                 <div className="text-center">
                   <FileUploadTrigger asChild>
-                    <Button className="cursor-pointer rounded-lg bg-mcmaster-maroon px-8 py-3 font-medium text-white hover:shadow-lg">
+                    <Button className="cursor-pointer rounded-lg bg-mcmaster-maroon px-6 py-3 font-medium text-sm text-white hover:shadow-lg md:px-8 md:text-base">
                       Send over your outline files!
                     </Button>
                   </FileUploadTrigger>
 
-                  <div className="mt-3 flex items-center justify-center gap-2 text-mcmaster-gray text-sm">
+                  <div className="mt-3 flex items-center justify-center gap-2 text-mcmaster-gray text-xs md:text-sm">
                     <span>ps: drag and drop works too 😉</span>
                   </div>
                 </div>

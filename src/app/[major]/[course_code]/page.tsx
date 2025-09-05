@@ -150,9 +150,9 @@ export default function CoursePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="container mx-auto px-2 py-4 md:px-4 md:py-8">
+        <div className="space-y-4 md:space-y-8">
+          <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
             {Array.from({ length: 6 }, () => {
               const cardId = Math.random().toString(36).substr(2, 9);
               return (
@@ -208,79 +208,77 @@ export default function CoursePage() {
 
   if (hasNoFiles) {
     return (
-      <div className="space-y-6">
-        <Card className="py-12 text-center">
-          <CardContent>
-            <FileText className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <CardTitle className="mb-2">
-              Course Outline Not Available Yet
-            </CardTitle>
-            <CardDescription className="mb-6 text-md">
-              No one has uploaded the course outline for this course yet. If you
-              have it please send it over. 🙂
-            </CardDescription>
+      <div className="flex min-h-[calc(100vh-200px)] w-full items-center justify-center">
+        <div className="space-y-4 px-2 py-8 text-center md:space-y-6 md:px-0 md:py-12">
+          <FileText className="mx-auto mb-3 h-12 w-12 text-muted-foreground md:mb-4 md:h-16 md:w-16" />
+          <h2 className="mb-2 font-bold text-xl tracking-tight md:text-2xl">
+            Course Outline Not Available Yet
+          </h2>
+          <p className="mb-4 text-muted-foreground text-sm md:mb-6 md:text-base">
+            No one has uploaded the course outline for this course yet. If you
+            have it please send it over. 🙂
+          </p>
 
-            <FileUpload
-              value={uploadedFiles}
-              onValueChange={setUploadedFiles}
-              accept=".pdf"
-              multiple
-              onUpload={handleFileUpload}
-              onFileReject={handleFileReject}
-              className="mx-auto w-full max-w-md"
-            >
-              <FileUploadDropzone className="rounded-lg border-2 border-muted-foreground/25 border-dashed p-8 transition-colors hover:border-muted-foreground/40">
-                <div className="flex flex-col items-center gap-4">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <div className="text-center">
-                    <p className="font-medium text-sm">
-                      Drop PDF files here or click to browse
-                    </p>
-                  </div>
-                  <FileUploadTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-mcmaster-maroon text-white"
-                    >
-                      Choose Files
-                    </Button>
-                  </FileUploadTrigger>
+          <FileUpload
+            value={uploadedFiles}
+            onValueChange={setUploadedFiles}
+            accept=".pdf"
+            multiple
+            onUpload={handleFileUpload}
+            onFileReject={handleFileReject}
+            className="mx-auto w-full max-w-md"
+          >
+            <FileUploadDropzone className="rounded-lg border-2 border-muted-foreground/25 border-dashed p-4 transition-colors hover:border-muted-foreground/40 md:p-8">
+              <div className="flex flex-col items-center gap-4">
+                <Upload className="h-6 w-6 text-muted-foreground md:h-8 md:w-8" />
+                <div className="text-center">
+                  <p className="font-medium text-xs md:text-sm">
+                    Drop PDF files here or click to browse
+                  </p>
                 </div>
-              </FileUploadDropzone>
-            </FileUpload>
-          </CardContent>
-        </Card>
+                <FileUploadTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-mcmaster-maroon text-white"
+                  >
+                    Choose Files
+                  </Button>
+                </FileUploadTrigger>
+              </div>
+            </FileUploadDropzone>
+          </FileUpload>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-8">
+    <div className="container mx-auto px-2 py-4 md:px-4 md:py-8">
+      <div className="space-y-4 md:space-y-8">
         {Object.entries(filesBySemester ?? {}).map(
           ([semester, semesterFiles]) => (
-            <div key={semester} className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div key={semester} className="space-y-4 md:space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
                 {semesterFiles.map((file) => (
                   <Card key={file.id} className="flex flex-col">
-                    <CardHeader className="pb-4">
+                    <CardHeader className="pb-3 md:pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-blue-600" />
-                          <CardTitle className="text-base leading-tight">
+                          <FileText className="h-4 w-4 text-blue-600 md:h-5 md:w-5" />
+                          <CardTitle className="text-sm leading-tight md:text-base">
                             {file.name}
                           </CardTitle>
                         </div>
                       </div>
                       {file.description && (
-                        <CardDescription className="line-clamp-2">
+                        <CardDescription className="line-clamp-2 text-xs md:text-sm">
                           {file.description}
                         </CardDescription>
                       )}
                     </CardHeader>
 
-                    <CardContent className="flex-1 space-y-4">
+                    <CardContent className="flex-1 space-y-3 md:space-y-4">
                       <div className="aspect-[3/4] overflow-hidden rounded-md border">
                         <iframe
                           src={file.download_url}
@@ -292,10 +290,10 @@ export default function CoursePage() {
 
                       <Separator />
 
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-1.5 text-xs md:space-y-2 md:text-sm">
                         {file.instructor && (
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
+                            <User className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
                             <span className="text-muted-foreground">
                               Instructor:
                             </span>
@@ -306,7 +304,7 @@ export default function CoursePage() {
                         )}
                         {file.courseCode && (
                           <div className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            <BookOpen className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
                             <span className="text-muted-foreground">
                               Course:
                             </span>
@@ -316,40 +314,44 @@ export default function CoursePage() {
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <Calendar className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
                           <span className="text-muted-foreground">
                             Uploaded:
                           </span>
                           <span>{formatDate(file.uploadedAt)}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <FileText className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
                           <span className="text-muted-foreground">Size:</span>
                           <span>{formatFileSize(file.size)}</span>
                         </div>
                       </div>
                     </CardContent>
 
-                    <CardFooter className="pt-4">
+                    <CardFooter className="pt-3 md:pt-4">
                       <div className="flex w-full gap-2">
-                        <Button asChild className="flex-1">
+                        <Button asChild className="flex-1 text-xs md:text-sm">
                           <a
                             href={file.download_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-1.5 md:gap-2"
                           >
-                            <FileText className="h-4 w-4" />
+                            <FileText className="h-3 w-3 md:h-4 md:w-4" />
                             View PDF
                           </a>
                         </Button>
-                        <Button variant="outline" asChild>
+                        <Button
+                          variant="outline"
+                          asChild
+                          className="text-xs md:text-sm"
+                        >
                           <a
                             href={file.download_url}
                             download={file.name}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-1.5 md:gap-2"
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-3 w-3 md:h-4 md:w-4" />
                           </a>
                         </Button>
                       </div>
