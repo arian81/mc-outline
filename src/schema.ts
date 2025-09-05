@@ -117,11 +117,6 @@ export type UploadedFileDataWithDownload = z.infer<
   typeof UploadedFileDataWithDownloadSchema
 >;
 
-export const coursesSearchSchema = z.object({
-  query: z.string().min(1),
-  limit: z.number().min(1).max(20).optional().default(5),
-});
-
 export type GithubListFilesResponse = {
   path: string;
   semesters: string[];
