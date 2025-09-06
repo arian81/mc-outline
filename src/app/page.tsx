@@ -1,6 +1,5 @@
 "use client";
 
-import { useDebounce } from "@uidotdev/usehooks";
 import { FileText, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useUploadFile } from "@/lib/opfs";
+import { useFuzzySearch } from "@/lib/search";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 
@@ -28,16 +28,10 @@ export default function App() {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { mutateAsync: uploadFile } = useUploadFile();
-  const debouncedSearchValue = useDebounce(searchValue, 300);
   const trpcUtils = api.useUtils();
-
-  const { data: searchResults = [], isLoading } = api.courses.search.useQuery(
-    { query: debouncedSearchValue, limit: 5 },
-    {
-      enabled: debouncedSearchValue.length >= 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  );
+  const searchData = useFuzzySearch(searchValue);
+  const searchResults = searchData.results;
+  const totalResults = searchData.total;
 
   useEffect(() => {
     if (searchResults.length > 0) {
@@ -237,19 +231,12 @@ export default function App() {
 
                   {searchValue && (
                     <div className="absolute top-full right-0 left-0 z-[100] mt-2 max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                      {isLoading ? (
-                        <div className="p-4 text-center md:p-8">
-                          <Search className="mx-auto mb-4 h-6 w-6 animate-spin text-mcmaster-gray" />
-                          <p className="text-mcmaster-gray text-sm">
-                            Searching courses...
-                          </p>
-                        </div>
-                      ) : searchResults.length > 0 ? (
+                      {searchResults.length > 0 ? (
                         <>
                           <div className="border-gray-100 border-b p-3 md:p-4">
                             <p className="font-medium text-mcmaster-gray text-xs md:text-sm">
-                              Found {searchResults.length} course
-                              {searchResults.length !== 1 ? "s" : ""} for you
+                              Showing {searchResults.length} out of {totalResults} course
+                              {totalResults !== 1 ? "s" : ""}
                             </p>
                           </div>
                           {searchResults.map((course, idx) => (
@@ -285,7 +272,7 @@ export default function App() {
                             </Link>
                           ))}
                         </>
-                      ) : debouncedSearchValue.length >= 2 ? (
+                      ) : searchValue.length >= 2 ? (
                         <div className="p-6 text-center md:p-8">
                           <Search className="mx-auto mb-4 h-8 w-8 text-mcmaster-gray opacity-40 md:h-12 md:w-12" />
                           <p className="mb-2 font-medium text-mcmaster-maroon text-sm md:text-base">

@@ -1,8 +1,8 @@
 import Fuse from "fuse.js";
 import courseMapping from "@/data/course_mapping.json";
-import { type CourseData, coursesSearchSchema } from "@/schema";
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import type { CourseData } from "@/schema";
 
+// Transform course mapping data to CourseData format
 const coursesData: CourseData[] = Object.entries(courseMapping).map(
   ([courseCode, courseName], index) => {
     const major = courseCode.split(" ")[0] || "";
@@ -27,17 +27,21 @@ const fuseOptions = {
   minMatchCharLength: 2,
 };
 
-const fuse = new Fuse(coursesData, fuseOptions);
+export function useFuzzySearch(query: string, limit = 20) {
+  const fuse = new Fuse(coursesData, fuseOptions);
 
-export const coursesRouter = createTRPCRouter({
-  search: publicProcedure.input(coursesSearchSchema).query(({ input }) => {
-    const { query, limit } = input;
+  if (!query || query.length < 2) {
+    return { results: [], total: 0 };
+  }
 
-    const results = fuse.search(query);
+  const allResults = fuse.search(query);
+  const mappedResults = allResults.map((result) => ({
+    ...result.item,
+    score: result.score,
+  }));
 
-    return results.slice(0, limit).map((result) => ({
-      ...result.item,
-      score: result.score,
-    }));
-  }),
-});
+  return {
+    results: mappedResults.slice(0, limit),
+    total: mappedResults.length, 
+  };
+}

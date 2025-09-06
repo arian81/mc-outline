@@ -112,7 +112,6 @@ export default function CoursePage() {
     console.log(`File "${file.name}" rejected: ${message}`);
   }, []);
 
-
   const sortedFiles = pdfFiles?.sort((a, b) => {
     const semesterA = a.semester || "Unknown";
     const semesterB = b.semester || "Unknown";
@@ -131,10 +130,10 @@ export default function CoursePage() {
       };
       return { year, season: seasonMap[season || ""] || 0 };
     };
-    
+
     const semesterDataA = parseSemester(semesterA);
     const semesterDataB = parseSemester(semesterB);
-    
+
     // Sort by year first (descending), then by season (descending)
     if (semesterDataA.year !== semesterDataB.year) {
       return semesterDataB.year - semesterDataA.year;
@@ -268,101 +267,91 @@ export default function CoursePage() {
       <div className="space-y-4 md:space-y-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {sortedFiles?.map((file) => (
-                  <Card key={file.id} className="flex flex-col">
-                    <CardHeader className="pb-3 md:pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-mcmaster-maroon md:h-5 md:w-5" />
-                          <CardTitle className="text-sm leading-tight md:text-base">
-                            {`${file.courseCode} | ${file.semester}`}
-                          </CardTitle>
-                        </div>
-                      </div>
-                      {file.description && (
-                        <CardDescription className="line-clamp-2 text-xs md:text-sm">
-                          {file.description}
-                        </CardDescription>
-                      )}
-                    </CardHeader>
+            <Card key={file.id} className="flex flex-col">
+              <CardHeader className="pb-3 md:pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-mcmaster-maroon md:h-5 md:w-5" />
+                    <CardTitle className="text-sm leading-tight md:text-base">
+                      {`${file.courseCode} | ${file.semester}`}
+                    </CardTitle>
+                  </div>
+                </div>
+                {file.description && (
+                  <CardDescription className="line-clamp-2 text-xs md:text-sm">
+                    {file.description}
+                  </CardDescription>
+                )}
+              </CardHeader>
 
-                    <CardContent className="flex-1 space-y-3 md:space-y-4">
-                      <div className="aspect-[3/4] overflow-hidden rounded-md border">
-                        <iframe
-                          src={file.download_url}
-                          className="h-full w-full"
-                          title={`${file.name} preview`}
-                          loading="lazy"
-                        />
-                      </div>
+              <CardContent className="flex-1 space-y-3 md:space-y-4">
+                <div className="aspect-[3/4] overflow-hidden rounded-md border">
+                  <iframe
+                    src={file.download_url}
+                    className="h-full w-full"
+                    title={`${file.name} preview`}
+                    loading="lazy"
+                  />
+                </div>
 
-                      <Separator />
+                <Separator />
 
-                      <div className="space-y-1.5 text-xs md:space-y-2 md:text-sm">
-                        {file.instructor && (
-                          <div className="flex items-center gap-2">
-                            <User className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
-                            <span className="text-muted-foreground">
-                              Instructor:
-                            </span>
-                            <span className="font-medium">
-                              {file.instructor}
-                            </span>
-                          </div>
-                        )}
-                        {file.courseCode && (
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
-                            <span className="text-muted-foreground">
-                              Course:
-                            </span>
-                            <span className="font-medium">
-                              {file.courseCode}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
-                          <span className="text-muted-foreground">
-                            Uploaded:
-                          </span>
-                          <span>{formatDate(file.uploadedAt)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
-                          <span className="text-muted-foreground">Size:</span>
-                          <span>{formatFileSize(file.size)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
+                <div className="space-y-1.5 text-xs md:space-y-2 md:text-sm">
+                  {file.instructor && (
+                    <div className="flex items-center gap-2">
+                      <User className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
+                      <span className="text-muted-foreground">Instructor:</span>
+                      <span className="font-medium">{file.instructor}</span>
+                    </div>
+                  )}
+                  {file.courseCode && (
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
+                      <span className="text-muted-foreground">Course:</span>
+                      <span className="font-medium">{file.courseCode}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
+                    <span className="text-muted-foreground">Uploaded:</span>
+                    <span>{formatDate(file.uploadedAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3 w-3 text-muted-foreground md:h-4 md:w-4" />
+                    <span className="text-muted-foreground">Size:</span>
+                    <span>{formatFileSize(file.size)}</span>
+                  </div>
+                </div>
+              </CardContent>
 
-                    <CardFooter className="pt-3 md:pt-4">
-                      <div className="flex w-full gap-2">
-                        <Button asChild className="flex-1 text-xs md:text-sm">
-                          <a
-                            href={file.download_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 md:gap-2"
-                          >
-                            <FileText className="h-3 w-3 md:h-4 md:w-4" />
-                            View PDF
-                          </a>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          asChild
-                          className="text-xs md:text-sm"
-                        >
-                          <a
-                            href={file.download_url}
-                            download={file.name}
-                            className="flex items-center gap-1.5 md:gap-2"
-                          >
-                            <Download className="h-3 w-3 md:h-4 md:w-4" />
-                          </a>
-                        </Button>
-                      </div>
-                    </CardFooter>
+              <CardFooter className="pt-3 md:pt-4">
+                <div className="flex w-full gap-2">
+                  <Button asChild className="flex-1 text-xs md:text-sm">
+                    <a
+                      href={file.download_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 md:gap-2"
+                    >
+                      <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                      View PDF
+                    </a>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="text-xs md:text-sm"
+                  >
+                    <a
+                      href={file.download_url}
+                      download={file.name}
+                      className="flex items-center gap-1.5 md:gap-2"
+                    >
+                      <Download className="h-3 w-3 md:h-4 md:w-4" />
+                    </a>
+                  </Button>
+                </div>
+              </CardFooter>
             </Card>
           ))}
         </div>
